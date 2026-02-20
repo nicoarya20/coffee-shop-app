@@ -6,6 +6,8 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
+    "server": "tsx watch server/index.ts",
+    "dev:all": "concurrently \"bun run dev\" \"bun run server\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -48,8 +50,10 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
+    "cors": "^2.8.5",
     "date-fns": "3.6.0",
     "embla-carousel-react": "8.6.0",
+    "express": "^4.21.2",
     "input-otp": "1.4.2",
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
@@ -71,9 +75,13 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "^9.1.2",
     "prisma": "^5.22.0",
     "tailwindcss": "4.1.12",
+    "tsx": "^4.19.2",
     "vite": "6.3.5"
   },
   "peerDependencies": {

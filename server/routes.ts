@@ -1,0 +1,176 @@
+import express from 'express';
+import cors from 'cors';
+import {
+  getProducts,
+  getProductById,
+  getFeaturedProducts,
+  getProductsByCategory,
+  searchProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getOrders,
+  getOrderById,
+  createOrder,
+  updateOrderStatus,
+  getUserProfile,
+  updateUserProfile
+} from './handlers.js';
+
+const router = express.Router();
+
+// Products routes
+router.get('/products', async (req, res) => {
+  try {
+    const { category, featured, search, limit, offset } = req.query;
+    const result = await getProducts(
+      category as string,
+      featured === 'true',
+      search as string,
+      limit ? parseInt(limit as string) : undefined,
+      offset ? parseInt(offset as string) : undefined
+    );
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/products/featured', async (req, res) => {
+  try {
+    const result = await getFeaturedProducts();
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/products/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ success: false, message: 'Search query is required' });
+    }
+    const result = await searchProducts(q as string);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/products/:id', async (req, res) => {
+  try {
+    const result = await getProductById(req.params.id);
+    res.json(result);
+  } catch (error: any) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/products', async (req, res) => {
+  try {
+    const { name, description, basePrice, image, category, featured, sizes } = req.body;
+    
+    if (!name || !basePrice || !category || !image) {
+      return res.status(400).json({ success: false, message: 'Required fields are missing' });
+    }
+
+    const result = await createProduct({ name, description, basePrice, image, category, featured, sizes });
+    res.status(201).json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.put('/products/:id', async (req, res) => {
+  try {
+    const result = await updateProduct(req.params.id, req.body);
+    res.json(result);
+  } catch (error: any) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+router.delete('/products/:id', async (req, res) => {
+  try {
+    const result = await deleteProduct(req.params.id);
+    res.json(result);
+  } catch (error: any) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+// Orders routes
+router.get('/orders', async (req, res) => {
+  try {
+    const result = await getOrders();
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/orders/:id', async (req, res) => {
+  try {
+    const result = await getOrderById(req.params.id);
+    res.json(result);
+  } catch (error: any) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/orders', async (req, res) => {
+  try {
+    const { items, customerName, notes } = req.body;
+    
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Order items are required' });
+    }
+    
+    if (!customerName) {
+      return res.status(400).json({ success: false, message: 'Customer name is required' });
+    }
+
+    const result = await createOrder({ items, customerName, notes });
+    res.status(201).json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.patch('/orders/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const validStatuses = ['pending', 'preparing', 'ready', 'completed'];
+    
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Valid status is required' });
+    }
+
+    const result = await updateOrderStatus(req.params.id, status);
+    res.json(result);
+  } catch (error: any) {
+    res.status(404).json({ success: false, message: error.message });
+  }
+});
+
+// User routes
+router.get('/user/profile', async (req, res) => {
+  try {
+    const result = await getUserProfile();
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.put('/user/profile', async (req, res) => {
+  try {
+    const result = await updateUserProfile(req.body);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+export default router;

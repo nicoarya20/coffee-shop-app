@@ -1,0 +1,343 @@
+import {
+  ArrowLeft,
+  Bell,
+  Camera,
+  ChevronRight,
+  CreditCard,
+  Globe,
+  Moon,
+  Palette,
+  Save,
+  Shield,
+  Smartphone,
+  Trash2,
+  User
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { toast } from 'sonner';
+
+export function Settings() {
+  const [notifications, setNotifications] = useState({
+    orderUpdates: true,
+    promotions: false,
+    newProducts: true,
+    reminders: false,
+  });
+
+  const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState('en');
+
+  const [profile, setProfile] = useState({
+    name: 'Coffee Lover',
+    email: 'coffee@example.com',
+    phone: '+62 812 3456 7890',
+  });
+
+  const handleSaveProfile = () => {
+    toast.success('Profile updated successfully');
+  };
+
+  const handleToggleNotification = (key: keyof typeof notifications) => {
+    setNotifications(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white px-4 pt-6 pb-12 rounded-b-3xl sticky top-0 z-40">
+        <div className="max-w-md mx-auto">
+          <div className="flex items-center gap-4 mb-4">
+            <Link to="/profile" className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <h1 className="text-2xl font-bold">Settings</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-4 -mt-8 space-y-4">
+        {/* Profile Settings */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <User className="w-5 h-5 text-amber-600" />
+            <h2 className="font-bold text-gray-900">Profile Information</h2>
+          </div>
+
+          {/* Profile Picture */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center">
+                <User className="w-12 h-12 text-amber-600" />
+              </div>
+              <button className="absolute bottom-0 right-0 w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-amber-600 transition-colors">
+                <Camera className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Profile Form */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={profile.name}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={profile.email}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={profile.phone}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            <button
+              onClick={handleSaveProfile}
+              className="w-full bg-amber-500 text-white rounded-lg py-3 font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
+              <Save className="w-5 h-5" />
+              Save Changes
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Appearance Settings */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Palette className="w-5 h-5 text-amber-600" />
+            <h2 className="font-bold text-gray-900">Appearance</h2>
+          </div>
+
+          <div className="space-y-4">
+            {/* Dark Mode */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <Moon className="w-5 h-5 text-gray-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Dark Mode</p>
+                  <p className="text-xs text-gray-500">Easier on the eyes</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`w-12 h-6 rounded-full transition-colors ${
+                  darkMode ? 'bg-amber-500' : 'bg-gray-300'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                    darkMode ? 'translate-x-6' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Notification Settings */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-5 h-5 text-amber-600" />
+            <h2 className="font-bold text-gray-900">Notifications</h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                key: 'orderUpdates',
+                label: 'Order Updates',
+                description: 'Get notified when your order status changes',
+                icon: CreditCard,
+              },
+              {
+                key: 'promotions',
+                label: 'Promotions',
+                description: 'Receive special offers and discounts',
+                icon: Bell,
+              },
+              {
+                key: 'newProducts',
+                label: 'New Products',
+                description: 'Be the first to know about new menu items',
+                icon: User,
+              },
+              {
+                key: 'reminders',
+                label: 'Reminders',
+                description: 'Daily coffee reminders',
+                icon: Smartphone,
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              const enabled = notifications[item.key as keyof typeof notifications];
+
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{item.label}</p>
+                      <p className="text-xs text-gray-500">{item.description}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleToggleNotification(item.key as keyof typeof notifications)}
+                    className={`w-12 h-6 rounded-full transition-colors ${
+                      enabled ? 'bg-amber-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <div
+                      className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
+                        enabled ? 'translate-x-6' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+
+        {/* Language & Region */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Globe className="w-5 h-5 text-amber-600" />
+            <h2 className="font-bold text-gray-900">Language & Region</h2>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Language
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="en">English</option>
+              <option value="id">Bahasa Indonesia</option>
+              <option value="zh">中文</option>
+              <option value="es">Español</option>
+            </select>
+          </div>
+        </motion.div>
+
+        {/* Privacy & Security */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl p-6 shadow-sm"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-5 h-5 text-amber-600" />
+            <h2 className="font-bold text-gray-900">Privacy & Security</h2>
+          </div>
+
+          <div className="space-y-3">
+            <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">Change Password</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">Payment Methods</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Danger Zone */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border-2 border-red-100"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Trash2 className="w-5 h-5 text-red-600" />
+            <h2 className="font-bold text-red-600">Danger Zone</h2>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4">
+            Once you delete your account, there is no going back. Please be certain.
+          </p>
+
+          <button className="w-full bg-red-50 text-red-600 rounded-lg py-3 font-medium hover:bg-red-100 transition-colors">
+            Delete Account
+          </button>
+        </motion.div>
+
+        {/* App Version */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-center pb-8"
+        >
+          <p className="text-sm text-gray-400">Coffee Shop App v1.0.0</p>
+          <p className="text-xs text-gray-400 mt-1">Made with ☕</p>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
