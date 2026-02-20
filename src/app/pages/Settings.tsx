@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   Bell,
@@ -11,14 +12,17 @@ import {
   Shield,
   Smartphone,
   Trash2,
-  User
+  User,
+  Sun,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
+import { useTheme } from '../context/ThemeContext';
 
 export function Settings() {
+  const { theme, toggleTheme } = useTheme();
+  
   const [notifications, setNotifications] = useState({
     orderUpdates: true,
     promotions: false,
@@ -26,7 +30,6 @@ export function Settings() {
     reminders: false,
   });
 
-  const [darkMode, setDarkMode] = useState(false);
   const [language, setLanguage] = useState('en');
 
   const [profile, setProfile] = useState({
@@ -47,7 +50,7 @@ export function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 transition-colors">
       {/* Header */}
       <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white px-4 pt-6 pb-12 rounded-b-3xl sticky top-0 z-40">
         <div className="max-w-md mx-auto">
@@ -148,23 +151,29 @@ export function Settings() {
             {/* Dark Mode */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Moon className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                  {theme === 'dark' ? (
+                    <Sun className="w-5 h-5 text-amber-500" />
+                  ) : (
+                    <Moon className="w-5 h-5 text-gray-600" />
+                  )}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900">Dark Mode</p>
-                  <p className="text-xs text-gray-500">Easier on the eyes</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {theme === 'dark' ? 'Currently enabled' : 'Easier on the eyes'}
+                  </p>
                 </div>
               </div>
               <button
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={toggleTheme}
                 className={`w-12 h-6 rounded-full transition-colors ${
-                  darkMode ? 'bg-amber-500' : 'bg-gray-300'
+                  theme === 'dark' ? 'bg-amber-500' : 'bg-gray-300'
                 }`}
               >
                 <div
                   className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                    darkMode ? 'translate-x-6' : 'translate-x-0.5'
+                    theme === 'dark' ? 'translate-x-6' : 'translate-x-0.5'
                   }`}
                 />
               </button>

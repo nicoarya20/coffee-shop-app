@@ -22,7 +22,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white rounded-xl shadow-sm overflow-hidden"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm dark:shadow-gray-900/50 overflow-hidden transition-colors"
     >
       <Link to={`/product/${product.id}`}>
         <div className="relative aspect-square overflow-hidden">
@@ -40,12 +40,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       </Link>
       <div className="p-4">
         <Link to={`/product/${product.id}`}>
-          <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-          <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{product.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
             {product.description}
           </p>
           <div className="flex items-center justify-between">
-            <span className="text-amber-600 font-bold">
+            <span className="text-amber-600 dark:text-amber-400 font-bold">
               {formatPrice(product.price)}
             </span>
           </div>
@@ -55,7 +55,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             e.preventDefault();
             onAddToCart?.();
           }}
-          className="mt-3 w-full bg-amber-500 hover:bg-amber-600 text-white rounded-lg py-2 flex items-center justify-center gap-2 font-medium active:scale-95 transition-transform"
+          className="mt-3 w-full bg-amber-500 hover:bg-amber-600 dark:hover:bg-amber-600 text-white rounded-lg py-2 flex items-center justify-center gap-2 font-medium active:scale-95 transition-transform"
         >
           <Plus className="w-4 h-4" />
           Add to Cart

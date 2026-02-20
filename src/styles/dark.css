@@ -1,0 +1,200 @@
+/* Dark Mode Styles */
+
+/* Base */
+html.dark {
+  color-scheme: dark;
+}
+
+/* Common dark mode background and text colors */
+html.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+/* Cards and surfaces */
+html.dark .bg-white {
+  background-color: #1f2937;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #111827;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #374151;
+}
+
+/* Text colors */
+html.dark .text-gray-900 {
+  color: #f3f4f6;
+}
+
+html.dark .text-gray-700 {
+  color: #d1d5db;
+}
+
+html.dark .text-gray-600 {
+  color: #9ca3af;
+}
+
+html.dark .text-gray-500 {
+  color: #6b7280;
+}
+
+/* Border colors */
+html.dark .border-gray-200 {
+  border-color: #374151;
+}
+
+html.dark .border-gray-100 {
+  border-color: #374151;
+}
+
+/* Shadow adjustments */
+html.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+html.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Input fields */
+html.dark input {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+html.dark input::placeholder {
+  color: #9ca3af;
+}
+
+/* Select fields */
+html.dark select {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+/* Hover states */
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #374151;
+}
+
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #4b5563;
+}
+
+/* Active states */
+html.dark .active\:bg-gray-50:active {
+  background-color: #374151;
+}
+
+/* Focus rings - keep amber color */
+html.dark .focus\:ring-amber-500:focus {
+  --tw-ring-color: #f59e0b;
+}
+
+/* Toggle button backgrounds */
+html.dark .bg-gray-300 {
+  background-color: #4b5563;
+}
+
+/* Danger zone */
+html.dark .border-red-100 {
+  border-color: #7f1d1d;
+}
+
+html.dark .bg-red-50 {
+  background-color: #450a0a;
+}
+
+html.dark .text-red-600 {
+  color: #f87171;
+}
+
+/* Amber accents remain the same */
+html.dark .text-amber-600 {
+  color: #f59e0b;
+}
+
+html.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.2);
+}
+
+html.dark .bg-amber-500 {
+  background-color: #f59e0b;
+}
+
+/* Purple admin badge */
+html.dark .bg-purple-100 {
+  background-color: rgba(168, 85, 247, 0.2);
+}
+
+html.dark .text-purple-600 {
+  color: #c084fc;
+}
+
+/* Yellow for featured */
+html.dark .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.2);
+}
+
+html.dark .text-yellow-700 {
+  color: #facc15;
+}
+
+/* Blue for actions */
+html.dark .text-blue-500 {
+  color: #60a5fa;
+}
+
+html.dark .hover\:bg-blue-50:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Red for delete */
+html.dark .text-red-500 {
+  color: #f87171;
+}
+
+html.dark .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Green for success */
+html.dark .text-green-600 {
+  color: #4ade80;
+}
+
+html.dark .bg-green-100 {
+  background-color: rgba(74, 222, 128, 0.2);
+}
+
+/* Blue for active orders */
+html.dark .bg-blue-100 {
+  background-color: rgba(96, 165, 250, 0.2);
+}
+
+html.dark .text-blue-600 {
+  color: #60a5fa;
+}
+
+/* Yellow for pending */
+html.dark .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.2);
+}
+
+html.dark .text-yellow-600 {
+  color: #facc15;
+}
+
+/* Gray for completed */
+html.dark .bg-gray-100 {
+  background-color: #374151;
+}
+
+html.dark .text-gray-600 {
+  color: #9ca3af;
+}
