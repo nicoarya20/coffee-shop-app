@@ -8,8 +8,10 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 export function Profile() {
   const [user] = useState({
@@ -20,6 +22,7 @@ export function Profile() {
   });
 
   const menuItems = [
+    { icon: Shield, label: 'Admin Dashboard', path: '/admin', admin: true },
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: HelpCircle, label: 'Help & Support', path: '/help' },
     { icon: LogOut, label: 'Logout', path: '/logout', danger: true },
@@ -93,21 +96,30 @@ export function Profile() {
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             return (
-              <motion.button
+              <Link
                 key={item.label}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 + index * 0.05 }}
-                className={`w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-b-0 active:bg-gray-50 transition-colors ${
-                  item.danger ? 'text-red-500' : 'text-gray-900'
-                }`}
+                to={item.path}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </motion.button>
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 + index * 0.05 }}
+                  className={`w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-b-0 active:bg-gray-50 transition-colors ${
+                    item.danger ? 'text-red-500' : item.admin ? 'text-purple-600' : 'text-gray-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                    {item.admin && (
+                      <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </motion.div>
+              </Link>
             );
           })}
         </div>
