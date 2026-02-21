@@ -134,6 +134,27 @@ export const api = {
       return handleResponse<User>(response);
     },
   },
+
+  // Auth API
+  auth: {
+    login: async (email: string, password: string): Promise<ApiResponse<User>> => {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      return handleResponse<User>(response);
+    },
+
+    register: async (data: any): Promise<ApiResponse<User>> => {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return handleResponse<User>(response);
+    },
+  },
 };
 
 export { ApiError };

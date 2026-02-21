@@ -14,10 +14,39 @@ import {
   createOrder,
   updateOrderStatus,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  login,
+  register
 } from './handlers.js';
 
 const router = express.Router();
+
+// Auth routes
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    const result = await login(email, password);
+    res.json(result);
+  } catch (error: any) {
+    res.status(401).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/auth/register', async (req, res) => {
+  try {
+    const { email, password, name, phone, role } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    const result = await register({ email, password, name, phone, role });
+    res.status(201).json(result);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 // Products routes
 router.get('/products', async (req, res) => {

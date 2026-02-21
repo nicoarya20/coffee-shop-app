@@ -27,8 +27,10 @@ export interface Order {
 }
 
 export interface User {
+  id: string;
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   loyaltyPoints: number;
+  role: 'USER' | 'ADMIN';
 }
