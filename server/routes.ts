@@ -44,7 +44,8 @@ router.post('/auth/register', async (req, res) => {
     const result = await register({ email, password, name, phone, role });
     res.status(201).json(result);
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Registration error details:', error);
+    res.status(500).json({ success: false, message: error.message || 'Unknown error' });
   }
 });
 
