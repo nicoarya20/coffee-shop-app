@@ -31,7 +31,8 @@ router.post('/auth/login', async (req, res) => {
     const result = await login(email, password);
     res.json(result);
   } catch (error: any) {
-    res.status(401).json({ success: false, message: error.message });
+    console.error('Login error details:', error);
+    res.status(401).json({ success: false, message: error.message || 'Authentication failed' });
   }
 });
 
