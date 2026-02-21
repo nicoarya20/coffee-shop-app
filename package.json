@@ -102,5 +102,8 @@
     "overrides": {
       "vite": "6.3.5"
     }
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

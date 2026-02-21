@@ -18,3 +18,8 @@ I have completed the following:
 
 
 You can now navigate to /login to sign in as either a User or an Admin.
+
+## I've completed the user registration and admin seeder.
+- Admin Seeder: Created prisma/seed.ts with credentials admin@coffee.com / adminpassword and user@coffee.com / userpassword, updated package.json, and seeded the database.
+- Registration Page: Developed src/app/pages/Register.tsx with fields for name, email, phone, and password.
+- Routing & Navigation: Added the /register route to src/app/routes.tsx and linked it from the Login page.
