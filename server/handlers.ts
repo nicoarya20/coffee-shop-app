@@ -1,4 +1,5 @@
-import { PrismaClient, OrderStatus, Category as PrismaCategory } from '@prisma/client';
+import { PrismaClient, OrderStatus, Role, Category as PrismaCategory } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -234,6 +235,61 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
   return { data: mapOrder(order), success: true };
 }
 
+export async function login(email: string, password: string): Promise<{ data: any; success: boolean }> {
+  await delay(500);
+  
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error('Invalid credentials');
+  }
+
+  return {
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      loyaltyPoints: user.loyaltyPoints,
+    },
+    success: true,
+  };
+}
+
+export async function register(data: { email: string; password: string; name?: string; phone?: string; role?: Role }): Promise<{ data: any; success: boolean }> {
+  await delay(500);
+
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
+  const user = await prisma.user.create({
+    data: {
+      email: data.email,
+      password: hashedPassword,
+      name: data.name,
+      phone: data.phone,
+      role: data.role || Role.USER,
+    },
+  });
+
+  return {
+    data: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      loyaltyPoints: user.loyaltyPoints,
+    },
+    success: true,
+  };
+}
+
 export async function getUserProfile(): Promise<{ data: any; success: boolean }> {
   await delay(300);
   
@@ -247,6 +303,7 @@ export async function getUserProfile(): Promise<{ data: any; success: boolean }>
         email: 'john@example.com',
         phone: '+62 812 3456 7890',
         loyaltyPoints: 150,
+        role: 'USER',
       },
       success: true,
     };
@@ -259,6 +316,7 @@ export async function getUserProfile(): Promise<{ data: any; success: boolean }>
       email: user.email,
       phone: user.phone,
       loyaltyPoints: user.loyaltyPoints,
+      role: user.role,
     },
     success: true,
   };
@@ -279,6 +337,7 @@ export async function updateUserProfile(data: { name?: string; email?: string; p
       email: user.email,
       phone: user.phone,
       loyaltyPoints: user.loyaltyPoints,
+      role: user.role,
     },
     success: true,
   };

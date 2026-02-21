@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router';
 import { Home } from './pages/Home';
 import { Menu } from './pages/Menu';
 import { ProductDetail } from './pages/ProductDetail';
@@ -7,11 +7,13 @@ import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
 import { Profile } from './pages/Profile';
 import { Settings } from './pages/Settings';
+import { Login } from './pages/Login';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { BottomNav } from './components/BottomNav';
 import { AdminBottomNav } from './components/admin/AdminBottomNav';
+import { useAuth } from './context/AuthContext';
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +25,15 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { user, isAdmin, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  if (!user || !isAdmin) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {children}
@@ -31,7 +42,24 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export const router = createBrowserRouter([
+  {
+    path: '/login',
+    element: <Login />,
+  },
   {
     path: '/',
     element: (
@@ -62,30 +90,40 @@ export const router = createBrowserRouter([
   },
   {
     path: '/checkout',
-    element: <Checkout />,
+    element: (
+      <ProtectedRoute>
+        <Checkout />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/orders',
     element: (
-      <Layout>
-        <Orders />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <Orders />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/profile',
     element: (
-      <Layout>
-        <Profile />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <Profile />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {
     path: '/settings',
     element: (
-      <Layout>
-        <Settings />
-      </Layout>
+      <ProtectedRoute>
+        <Layout>
+          <Settings />
+        </Layout>
+      </ProtectedRoute>
     ),
   },
   {

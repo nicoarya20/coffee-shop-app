@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import {
-  User,
+  User as UserIcon,
   Mail,
   Phone,
   Award,
@@ -10,22 +10,27 @@ import {
   ChevronRight,
   Shield,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 export function Profile() {
-  const [user] = useState({
-    name: 'Coffee Lover',
-    email: 'coffee@example.com',
-    phone: '+62 812 3456 7890',
-    loyaltyPoints: 450,
-  });
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) return null;
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    navigate('/');
+  };
 
   const menuItems = [
-    { icon: Shield, label: 'Admin Dashboard', path: '/admin', admin: true },
+    ...(isAdmin ? [{ icon: Shield, label: 'Admin Dashboard', path: '/admin', admin: true }] : []),
     { icon: Settings, label: 'Settings', path: '/settings' },
     { icon: HelpCircle, label: 'Help & Support', path: '/help' },
-    { icon: LogOut, label: 'Logout', path: '/logout', danger: true },
+    { icon: LogOut, label: 'Logout', onClick: handleLogout, danger: true },
   ];
 
   return (
@@ -43,11 +48,11 @@ export function Profile() {
           >
             <div className="flex items-center gap-4 mb-6">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-white" />
+                <UserIcon className="w-8 h-8 text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">{user.name}</h2>
-                <p className="text-amber-100 text-sm">Member since 2024</p>
+                <p className="text-amber-100 text-sm">{isAdmin ? 'Administrator' : 'Coffee Member'}</p>
               </div>
             </div>
 
@@ -56,10 +61,12 @@ export function Profile() {
                 <Mail className="w-4 h-4" />
                 <span className="text-sm">{user.email}</span>
               </div>
-              <div className="flex items-center gap-3 text-white/90">
-                <Phone className="w-4 h-4" />
-                <span className="text-sm">{user.phone}</span>
-              </div>
+              {user.phone && (
+                <div className="flex items-center gap-3 text-white/90">
+                  <Phone className="w-4 h-4" />
+                  <span className="text-sm">{user.phone}</span>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -95,55 +102,40 @@ export function Profile() {
         <div className="mt-6 bg-white rounded-2xl shadow-sm overflow-hidden">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            return (
-              <Link
-                key={item.label}
-                to={item.path}
+            const content = (
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 + index * 0.05 }}
+                className={`w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-b-0 active:bg-gray-50 transition-colors cursor-pointer ${
+                  item.danger ? 'text-red-500' : (item as any).admin ? 'text-purple-600' : 'text-gray-900'
+                }`}
+                onClick={item.onClick}
               >
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 + index * 0.05 }}
-                  className={`w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-b-0 active:bg-gray-50 transition-colors ${
-                    item.danger ? 'text-red-500' : item.admin ? 'text-purple-600' : 'text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                    {item.admin && (
-                      <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
-                        Admin
-                      </span>
-                    )}
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </motion.div>
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                  {(item as any).admin && (
+                    <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">
+                      Admin
+                    </span>
+                  )}
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </motion.div>
+            );
+
+            return (item as any).path ? (
+              <Link key={item.label} to={(item as any).path}>
+                {content}
               </Link>
+            ) : (
+              <div key={item.label}>
+                {content}
+              </div>
             );
           })}
         </div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-6 grid grid-cols-3 gap-4"
-        >
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <p className="text-2xl font-bold text-amber-600">24</p>
-            <p className="text-xs text-gray-600 mt-1">Orders</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <p className="text-2xl font-bold text-amber-600">5</p>
-            <p className="text-xs text-gray-600 mt-1">Favorites</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <p className="text-2xl font-bold text-amber-600">12</p>
-            <p className="text-xs text-gray-600 mt-1">Reviews</p>
-          </div>
-        </motion.div>
       </div>
     </div>
   );

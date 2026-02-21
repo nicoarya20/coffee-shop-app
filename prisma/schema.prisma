@@ -11,11 +11,18 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id             String   @id @default(cuid())
   email          String   @unique
+  password       String   @default("") // Temporarily added with default for migration safety
   name           String?
   phone          String?
+  role           Role     @default(USER)
   loyaltyPoints  Int      @default(0)
   orders         Order[]
   createdAt      DateTime @default(now())
