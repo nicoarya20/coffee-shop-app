@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('coffee_shop_user');
   };
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin }}>

@@ -54,44 +54,44 @@ export function AdminDashboard() {
   const [previousOrderCount, setPreviousOrderCount] = useState(0);
 
   // Fetch data
-  const fetchData = async () => {
+  const fetchData = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [ordersRes, productsRes] = await Promise.all([
         api.orders.getAll(),
         api.products.getAll(),
       ]);
 
-      // Check for new orders
-      const newOrdersCount = ordersRes.data.length - previousOrderCount;
-      if (newOrdersCount > 0 && previousOrderCount > 0) {
-        // New order notification
-        toast.success(`🔔 ${newOrdersCount} new order(s) received!`, {
-          duration: 5000,
-        });
+      // Use functional state update to get the latest previousOrderCount
+      setPreviousOrderCount(prevCount => {
+        const newOrdersCount = ordersRes.data.length - prevCount;
+        if (newOrdersCount > 0 && prevCount > 0) {
+          // New order notification
+          toast.success(`🔔 ${newOrdersCount} new order(s) received!`, {
+            duration: 5000,
+          });
 
-        // Play notification sound (optional)
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => {}); // Ignore errors if autoplay is blocked
-      }
+          // Play notification sound (optional)
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(() => {}); // Ignore errors if autoplay is blocked
+        }
+        return ordersRes.data.length;
+      });
 
       setOrders(ordersRes.data);
       setProducts(productsRes.data);
-      setPreviousOrderCount(ordersRes.data.length);
     } catch (error) {
-      // Silent fail - don't show error toast for empty data or network issues during polling
-      // This prevents annoying notifications when admin panel is open but no active orders
       console.error('Failed to fetch data:', error);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-    // Poll for new orders every 5 seconds
-    const interval = setInterval(fetchData, 5000);
+    // Poll for new orders every 5 seconds without showing full-page loading spinner
+    const interval = setInterval(() => fetchData(true), 5000);
     return () => clearInterval(interval);
   }, []);
 

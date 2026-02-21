@@ -33,17 +33,15 @@ export function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'coffee' | 'tea' | 'snacks'>('all');
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const response = await api.products.getAll();
       setProducts(response.data);
     } catch (error) {
-      // Silent fail - don't show error toast for empty data or network issues
-      // This prevents annoying notifications when admin panel is open
       console.error('Failed to fetch products:', error);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 

@@ -26,23 +26,22 @@ export function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'active' | 'completed'>('all');
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const response = await api.orders.getAll();
       setOrders(response.data);
     } catch (error) {
-      // Silent fail - don't show error toast for empty data or network issues during polling
-      // This prevents annoying notifications when admin panel is open but no active orders
       console.error('Failed to fetch orders:', error);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000);
+    // Poll for new orders every 5 seconds without showing loading spinner
+    const interval = setInterval(() => fetchOrders(true), 5000);
     return () => clearInterval(interval);
   }, []);
 
