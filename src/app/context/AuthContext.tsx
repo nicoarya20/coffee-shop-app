@@ -29,13 +29,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      const response = await api.user.getProfile();
+      // Get userId from localStorage
+      const savedUser = localStorage.getItem('coffee_shop_user');
+      const userId = savedUser ? JSON.parse(savedUser).id : null;
+      
+      if (!userId) {
+        console.warn('⚠️ No userId found, cannot refresh');
+        return;
+      }
+      
+      const response = await api.user.getProfile(userId);
       if (response.success) {
         setUser(response.data);
         localStorage.setItem('coffee_shop_user', JSON.stringify(response.data));
-        console.log('🔄 User refreshed:', { 
-          name: response.data.name, 
-          loyaltyPoints: response.data.loyaltyPoints 
+        console.log('🔄 User refreshed:', {
+          id: response.data.id,
+          name: response.data.name,
+          role: response.data.role,
+          loyaltyPoints: response.data.loyaltyPoints
         });
       }
     } catch (error) {

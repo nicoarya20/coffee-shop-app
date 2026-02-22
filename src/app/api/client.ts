@@ -140,8 +140,9 @@ export const api = {
 
   // User API
   user: {
-    getProfile: async (): Promise<ApiResponse<User>> => {
-      const response = await fetch(`${API_BASE_URL}/user/profile`);
+    getProfile: async (userId?: string): Promise<ApiResponse<User>> => {
+      const searchParams = userId ? `?userId=${userId}` : '';
+      const response = await fetch(`${API_BASE_URL}/user/profile${searchParams}`);
       return handleResponse<User>(response);
     },
 

@@ -400,12 +400,35 @@ export async function register(data: { email: string; password: string; name?: s
   };
 }
 
-export async function getUserProfile(): Promise<{ data: any; success: boolean }> {
+export async function getUserProfile(userId?: string): Promise<{ data: any; success: boolean }> {
   await delay(300);
-  
-  // Get first user or return default
+
+  // If userId provided, get that specific user
+  if (userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return {
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        loyaltyPoints: user.loyaltyPoints,
+        role: user.role,
+      },
+      success: true,
+    };
+  }
+
+  // Fallback: Get first user (for demo/testing only)
   const user = await prisma.user.findFirst();
-  
+
   if (!user) {
     return {
       data: {
