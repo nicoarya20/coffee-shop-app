@@ -32,12 +32,23 @@ function mapCategory(category: PrismaCategory): 'coffee' | 'tea' | 'snacks' {
 
 // Map Prisma product to app product format
 function mapProduct(product: any): Product {
+  console.log('📦 Mapping product:', {
+    id: product.id,
+    name: product.name,
+    image: product.image,
+    imageUrl: product.imageUrl,
+    gdriveFileId: product.gdriveFileId,
+  });
+
+  // Use imageUrl if available (from Google Drive), fallback to image field
+  const imageUrl = product.imageUrl || product.image;
+
   return {
     id: product.id,
     name: product.name,
     description: product.description,
     price: product.basePrice,
-    image: product.image,
+    image: imageUrl,
     category: mapCategory(product.category),
     featured: product.featured,
     sizes: product.sizes?.map((s: any) => ({

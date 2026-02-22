@@ -37,6 +37,10 @@ export function AdminProductsPage() {
     try {
       if (!isSilent) setLoading(true);
       const response = await api.products.getAll();
+      console.log('📥 Fetched products:', response.data);
+      response.data.forEach(product => {
+        console.log(`  - ${product.name}: image URL =`, product.image);
+      });
       setProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -218,6 +222,10 @@ export function AdminProductsPage() {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-32 rounded-lg object-cover"
+                  onError={(e) => {
+                    console.error('❌ Failed to load image:', product.image);
+                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/f59e0b/ffffff?text=No+Image';
+                  }}
                 />
                 {product.featured && (
                   <span className="absolute top-1 right-1 bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
