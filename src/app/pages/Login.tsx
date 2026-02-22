@@ -20,30 +20,45 @@ export function Login() {
     setIsLoading(true);
 
     try {
-      console.log('🔐 Attempting login:', { email, activeTab });
-      
+      console.log('🔐 Attempting login:', { 
+        email, 
+        activeTab,
+        expectedRole: activeTab === 'admin' ? 'ADMIN' : 'USER'
+      });
+
       // Login and get user data
       await login(email, password);
-      
+
       // Refresh to get latest user data with role
       if (refreshUser) {
         await refreshUser();
       }
-      
+
       // Get user from localStorage (already updated by refreshUser)
       const savedUser = localStorage.getItem('coffee_shop_user');
       const loggedInUser = savedUser ? JSON.parse(savedUser) : null;
-      
+
       console.log('✅ Login successful:', {
         email: loggedInUser?.email,
         role: loggedInUser?.role,
+        roleInDB: loggedInUser?.role,
+        expectedRole: activeTab === 'admin' ? 'ADMIN' : 'USER',
+        mismatch: loggedInUser?.role?.toUpperCase() !== (activeTab === 'admin' ? 'ADMIN' : 'USER')
       });
-      
+
       toast.success(`Welcome, ${loggedInUser?.name || 'User'}!`);
+
+      // Show warning if role doesn't match selected tab
+      if (loggedInUser?.role?.toUpperCase() !== (activeTab === 'admin' ? 'ADMIN' : 'USER')) {
+        toast.warning(
+          `⚠️ Account role (${loggedInUser?.role}) doesn't match selected tab (${activeTab}). Redirecting based on actual role.`,
+          { duration: 5000 }
+        );
+      }
 
       // Redirect based on user role, not tab selection
       const from = (location.state as any)?.from?.pathname;
-      
+
       if (loggedInUser?.role?.toUpperCase() === 'ADMIN') {
         navigate('/admin', { replace: true });
         toast.info('Redirecting to Admin Dashboard');
@@ -111,15 +126,18 @@ export function Login() {
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
             <p className="text-xs text-blue-800 font-medium mb-2">📝 Demo Credentials:</p>
             <div className="text-xs text-blue-700 space-y-1">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span><strong>User:</strong> user@coffee.com</span>
-                <span>userpassword</span>
+                <span className="text-blue-600 font-mono">userpassword</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span><strong>Admin:</strong> admin@coffee.com</span>
-                <span>adminpassword</span>
+                <span className="text-blue-600 font-mono">adminpassword</span>
               </div>
             </div>
+            <p className="text-xs text-blue-600 mt-3">
+              ℹ️ Login will redirect based on your account role in database, not the selected tab.
+            </p>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
