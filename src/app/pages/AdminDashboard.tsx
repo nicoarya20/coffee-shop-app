@@ -183,6 +183,10 @@ export function AdminDashboard() {
         return { icon: Package, text: 'Ready', color: 'text-green-600', bg: 'bg-green-100' };
       case 'completed':
         return { icon: CheckCircle, text: 'Completed', color: 'text-gray-600', bg: 'bg-gray-100' };
+      case 'cancelled':
+        return { icon: Clock, text: 'Cancelled', color: 'text-red-600', bg: 'bg-red-100' };
+      default:
+        return { icon: Clock, text: 'Unknown', color: 'text-gray-600', bg: 'bg-gray-100' };
     }
   };
 
