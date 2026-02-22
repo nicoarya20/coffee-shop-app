@@ -28,13 +28,17 @@ interface PointsHistory {
 }
 
 export function Profile() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [pointsHistory, setPointsHistory] = useState<PointsHistory[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(false);
 
   useEffect(() => {
     fetchPointsHistory();
+    // Refresh points data when component mounts
+    if (refreshUser) {
+      refreshUser();
+    }
   }, []);
 
   const fetchPointsHistory = async () => {

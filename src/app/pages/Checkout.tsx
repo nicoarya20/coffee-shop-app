@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ChevronLeft, CreditCard, Wallet } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { toast } from 'sonner';
 
 export function Checkout() {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
+  const { user } = useAuth();
 
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
@@ -40,17 +42,25 @@ export function Checkout() {
         total: item.total,
       }));
 
-      // Call API to create order
+      console.log('📝 Placing order:', {
+        userId: user?.id,
+        customerName,
+        total,
+        itemCount: items.length,
+      });
+
+      // Call API to create order with userId
       await api.orders.create({
         items: orderItems,
         customerName,
         notes: notes || undefined,
+        userId: user?.id || undefined,
       });
 
       // Clear cart and show success
       clearCart();
       setIsProcessing(false);
-      toast.success('Order placed successfully! Check your orders.');
+      toast.success('Order placed successfully! You will earn loyalty points when order is completed.');
       navigate('/orders');
     } catch (error: any) {
       console.error('Failed to place order:', error);

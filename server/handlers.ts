@@ -191,10 +191,17 @@ export async function getOrderById(id: string): Promise<{ data: any; success: bo
   return { data: mapOrder(order), success: true };
 }
 
-export async function createOrder(input: { items: any[]; customerName: string; notes?: string }): Promise<{ data: any; success: boolean }> {
+export async function createOrder(input: { items: any[]; customerName: string; notes?: string; userId?: string }): Promise<{ data: any; success: boolean }> {
   await delay(500);
 
   const total = input.items.reduce((sum, item) => sum + item.total, 0);
+
+  console.log('📝 Creating order:', {
+    customerName: input.customerName,
+    total,
+    userId: input.userId,
+    itemCount: input.items.length,
+  });
 
   const newOrder = await prisma.order.create({
     data: {
@@ -202,6 +209,7 @@ export async function createOrder(input: { items: any[]; customerName: string; n
       status: 'PENDING',
       customerName: input.customerName,
       notes: input.notes,
+      userId: input.userId || null, // Link order to user if provided
       items: {
         create: input.items.map((item: any) => ({
           quantity: item.quantity,
@@ -221,6 +229,8 @@ export async function createOrder(input: { items: any[]; customerName: string; n
       },
     },
   });
+
+  console.log('✅ Order created:', { orderId: newOrder.id, userId: newOrder.userId });
 
   return { data: mapOrder(newOrder), success: true };
 }

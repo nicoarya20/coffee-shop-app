@@ -398,3 +398,149 @@ Apakah kamu ingin saya sekalian memperbarui package.json agar otomatis menjalank
     ---
 
     Refresh browser dan test cancel order sekarang! Revenue tidak akan bertambah saat order di-cancel. 🎉
+
+    ✦ ✅ DONE! Loyalty Points System sudah diimplementasi!
+
+    ---
+
+    📊 Summary Loyalty Points System
+
+    🎯 Points Calculation Rules:
+
+     1 1 Point = Rp 1,000 spent
+     2 2x Points for Coffee purchases
+     3 Points awarded when order is COMPLETED
+
+    Example Calculation:
+
+     1 Order 1: Cappuccino (Coffee) - Rp 35,000
+     2   Base Points: 35,000 / 1,000 = 35 points
+     3   Coffee Bonus: 35 × 2 = 70 points ✅
+     4
+     5 Order 2: Chocolate Cake (Snack) - Rp 25,000
+     6   Base Points: 25,000 / 1,000 = 25 points
+     7   No bonus: 25 points
+     8
+     9 Total: 70 + 25 = 95 points 🎉
+
+    ---
+
+    🗄️ Database Schema:
+
+      1 model PointsHistory {
+      2   id          String
+      3   userId      String
+      4   user        User
+      5   points      Int      // Positive for earned, negative for redeemed
+      6   type        String   // 'earned' or 'redeemed'
+      7   description String   // e.g., "Order completed: John Doe"
+      8   orderId     String?
+      9   createdAt   DateTime
+     10 }
+
+    ---
+
+    🔄 Order Flow with Points:
+
+      1 User places order → Status: PENDING
+      2          ↓
+      3 Admin: Start Preparing → PREPARING
+      4          ↓
+      5 Admin: Mark as Ready → READY
+      6          ↓
+      7 Admin: Complete Order → COMPLETED
+      8          ↓
+      9 🎉 Points calculated & awarded!
+     10    - Check product category
+     11    - Calculate base points (total / 1000)
+     12    - Apply 2x for Coffee
+     13    - Update user.loyaltyPoints
+     14    - Create PointsHistory entry
+
+    ---
+
+    📱 Profile Page Features:
+
+    1. Loyalty Points Card
+
+     1 ┌─────────────────────────────┐
+     2 │  🏆 Loyalty Points          │
+     3 │         95                  │
+     4 ├─────────────────────────────┤
+     5 │  📈 Earned    🎁 Redeemed  │
+     6 │  +95          -0            │
+     7 └─────────────────────────────┘
+
+    2. How to Earn Points
+
+     1 💰 How to earn points:
+     2 • 1 Point for every Rp 1,000 spent
+     3 • ☕ 2x Points for Coffee purchases!
+     4 • Points awarded when order is completed
+
+    3. Points History Timeline
+
+     1 ┌─────────────────────────────────┐
+     2 │ 📈 Points History               │
+     3 ├─────────────────────────────────┤
+     4 │ 📈 +70  Order completed: John   │
+     5 │       Dec 22, 2026              │
+     6 ├─────────────────────────────────┤
+     7 │ 📈 +25  Order completed: Jane   │
+     8 │       Dec 21, 2026              │
+     9 └─────────────────────────────────┘
+
+    ---
+
+    🔧 Backend API:
+
+    New Endpoint:
+
+      1 GET /api/user/points-history
+      2 Response: {
+      3   success: true,
+      4   data: [
+      5     {
+      6       id: "...",
+      7       points: 70,
+      8       type: "earned",
+      9       description: "Order completed: John Doe",
+     10       orderId: "...",
+     11       createdAt: "2026-12-22T..."
+     12     }
+     13   ]
+     14 }
+
+    ---
+
+    🧪 Test Flow:
+
+     1. User places order (e.g., Cappuccino Rp 35,000)
+     2. Admin completes order → Status: COMPLETED
+     3. Check server log:
+
+     1    🎉 Awarded 70 points to user abc123
+     4. User Profile:
+        - Loyalty Points: +70
+        - Points History shows new entry
+        - Earned stats updated
+
+    ---
+
+    ✨ Features:
+
+
+    ┌───────────────────────┬─────────────────────────┐
+    │ Feature               │ Status                  │
+    ├───────────────────────┼─────────────────────────┤
+    │ Points calculation    │ ✅ 1 point per Rp 1,000 │
+    │ Coffee 2x bonus       │ ✅ Auto-applied         │
+    │ Points history        │ ✅ Full tracking        │
+    │ Earned/Redeemed stats │ ✅ Displayed            │
+    │ Empty state           │ ✅ Friendly message     │
+    │ Loading state         │ ✅ Spinner              │
+    │ Indonesian dates      │ ✅ Formatted            │
+    └───────────────────────┴─────────────────────────┘
+
+
+    Loyalty points system is live! 🎉
