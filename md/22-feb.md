@@ -45,3 +45,31 @@ Summary of fixes:
 To avoid the 404 error, please ensure you are running the application using:
 1 npm run dev:all
 This command starts both the Vite frontend and the Express backend simultaneously.
+
+## Penyebab error 404 pada /api/auth/login di Vercel adalah karena Vercel menganggap aplikasi kamu hanya sebagai aplikasi statis (Vite) dan tidak tahu bahwa ada server Express yang harus dijalankan untuk menangani rute /api.
+
+Saya telah melakukan konfigurasi berikut untuk memperbaikinya:
+
+
+   1. `vercel.json`: Membuat file konfigurasi untuk memberi tahu Vercel agar meneruskan semua permintaan yang dimulai dengan /api ke
+      fungsi serverless.
+   2. `api/index.js`: Membuat entry point untuk Vercel agar bisa menjalankan server Express kamu sebagai Serverless Function.
+   3. `server/index.ts`: Menyesuaikan server agar tidak mencoba menjalankan app.listen (membuka port) saat berada di lingkungan produksi
+      (Vercel), karena Vercel yang akan menangani eksekusinya.
+   4. `src/app/api/client.ts`: Membuat URL API lebih fleksibel dengan dukungan variabel lingkungan VITE_API_URL.
+
+  Langkah selanjutnya yang harus kamu lakukan:
+
+   1. Commit dan Push perubahan ini ke GitHub:
+
+
+   1     git add .
+   2     git commit -m "fix: vercel deployment configuration for express api"
+   3     git push origin fix-vercel
+   2. Tunggu proses deployment di dashboard Vercel selesai.
+   3. Pastikan Environment Variables di Vercel sudah benar, terutama DATABASE_URL (dan DIRECT_URL jika menggunakan Supabase/Neon).
+   4. Generate Prisma Client: Pastikan di Vercel ada command prisma generate yang dijalankan saat build. Kamu bisa menambahkannya di
+      package.json pada bagian build: "build": "prisma generate && vite build".
+
+
+  Apakah kamu ingin saya sekalian memperbarui package.json agar otomatis menjalankan prisma generate saat build di Vercel?

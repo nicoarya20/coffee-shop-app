@@ -1,5 +1,7 @@
 import { PrismaClient, OrderStatus, Role, Category as PrismaCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { uploadFile } from './services/googleDrive.js';
+import { File } from 'multer';
 
 const prisma = new PrismaClient();
 
@@ -348,6 +350,8 @@ export async function createProduct(data: {
   description?: string;
   basePrice: number;
   image: string;
+  imageUrl?: string;
+  gdriveFileId?: string;
   category: string;
   featured?: boolean;
   sizes?: Array<{ name: string; price: number }>;
@@ -360,6 +364,8 @@ export async function createProduct(data: {
       description: data.description || '',
       basePrice: data.basePrice,
       image: data.image,
+      imageUrl: data.imageUrl || data.image,
+      gdriveFileId: data.gdriveFileId,
       category: data.category as any,
       featured: data.featured || false,
       sizes: data.sizes ? {
@@ -378,23 +384,39 @@ export async function createProduct(data: {
 export async function updateProduct(id: string, data: any): Promise<{ data: any; success: boolean }> {
   await delay(300);
 
+  const updateData: any = {
+    name: data.name,
+    description: data.description,
+    basePrice: data.basePrice,
+    category: data.category,
+    featured: data.featured,
+  };
+
+  // Handle image fields
+  if (data.image !== undefined) {
+    updateData.image = data.image;
+  }
+  if (data.imageUrl !== undefined) {
+    updateData.imageUrl = data.imageUrl;
+  }
+  if (data.gdriveFileId !== undefined) {
+    updateData.gdriveFileId = data.gdriveFileId;
+  }
+
+  // Handle sizes
+  if (data.sizes) {
+    updateData.sizes = {
+      deleteMany: {},
+      create: data.sizes.map((s: any) => ({
+        name: s.name,
+        price: s.price,
+      })),
+    };
+  }
+
   const product = await prisma.product.update({
     where: { id },
-    data: {
-      name: data.name,
-      description: data.description,
-      basePrice: data.basePrice,
-      image: data.image,
-      category: data.category,
-      featured: data.featured,
-      sizes: data.sizes ? {
-        deleteMany: {},
-        create: data.sizes.map((s: any) => ({
-          name: s.name,
-          price: s.price,
-        })),
-      } : undefined,
-    },
+    data: updateData,
     include: { sizes: true },
   });
 
@@ -409,4 +431,32 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   });
 
   return { success: true };
+}
+
+/**
+ * Upload product image to Google Drive
+ * @param file - Multer file object
+ */
+export async function uploadProductImage(file: File): Promise<{
+  success: boolean;
+  fileId?: string;
+  fileUrl?: string;
+  error?: string;
+}> {
+  if (!file) {
+    return { success: false, error: 'No file provided' };
+  }
+
+  // Validate file type
+  if (!file.mimetype.startsWith('image/')) {
+    return { success: false, error: 'Only image files are allowed' };
+  }
+
+  // Validate file size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: 'File size must be less than 5MB' };
+  }
+
+  // Upload to Google Drive
+  return uploadFile(file.buffer, file.originalname, file.mimetype);
 }

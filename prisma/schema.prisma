@@ -37,6 +37,8 @@ model Product {
   description String
   basePrice   Int
   image       String
+  imageUrl    String?     // Google Drive public URL
+  gdriveFileId String?    // Google Drive file ID
   category    Category
   featured    Boolean     @default(false)
   sizes       Size[]

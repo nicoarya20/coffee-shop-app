@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import multer from 'multer';
 import {
   getProducts,
   getProductById,
@@ -16,10 +17,28 @@ import {
   getUserProfile,
   updateUserProfile,
   login,
-  register
+  register,
+  uploadProductImage
 } from './handlers.js';
 
 const router = express.Router();
+
+// Configure multer for file upload (memory storage)
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Only image files are allowed'));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 // Auth routes
 router.post('/auth/login', async (req, res) => {
@@ -98,26 +117,95 @@ router.get('/products/:id', async (req, res) => {
   }
 });
 
-router.post('/products', async (req, res) => {
+router.post('/products', upload.single('image'), async (req, res) => {
   try {
     const { name, description, basePrice, image, category, featured, sizes } = req.body;
-    
-    if (!name || !basePrice || !category || !image) {
+
+    if (!name || !basePrice || !category) {
       return res.status(400).json({ success: false, message: 'Required fields are missing' });
     }
 
-    const result = await createProduct({ name, description, basePrice, image, category, featured, sizes });
+    // Handle file upload to Google Drive
+    let imageUrl = image; // Fallback to URL if provided
+    let gdriveFileId: string | undefined;
+
+    if (req.file) {
+      const uploadResult = await uploadProductImage(req.file);
+      if (!uploadResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: uploadResult.error || 'Failed to upload image',
+        });
+      }
+      imageUrl = uploadResult.fileUrl!;
+      gdriveFileId = uploadResult.fileId;
+    } else if (!image) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image URL or image file is required',
+      });
+    }
+
+    const result = await createProduct({
+      name,
+      description,
+      basePrice: parseInt(basePrice),
+      image: imageUrl,
+      imageUrl,
+      gdriveFileId,
+      category,
+      featured: featured === 'true',
+      sizes: sizes ? JSON.parse(sizes) : undefined,
+    });
     res.status(201).json(result);
   } catch (error: any) {
+    console.error('Create product error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-router.put('/products/:id', async (req, res) => {
+router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
-    const result = await updateProduct(req.params.id, req.body);
+    const { name, description, basePrice, image, category, featured, sizes } = req.body;
+
+    // Handle file upload to Google Drive if new file is uploaded
+    let imageUrl = image;
+    let gdriveFileId: string | undefined;
+
+    if (req.file) {
+      const uploadResult = await uploadProductImage(req.file);
+      if (!uploadResult.success) {
+        return res.status(500).json({
+          success: false,
+          message: uploadResult.error || 'Failed to upload image',
+        });
+      }
+      imageUrl = uploadResult.fileUrl!;
+      gdriveFileId = uploadResult.fileId;
+    }
+
+    const updateData: any = {
+      name,
+      description,
+      basePrice: basePrice ? parseInt(basePrice) : undefined,
+      category,
+      featured: featured !== undefined ? featured === 'true' : undefined,
+      sizes: sizes ? JSON.parse(sizes) : undefined,
+    };
+
+    // Only update image fields if new image is provided
+    if (imageUrl) {
+      updateData.image = imageUrl;
+      updateData.imageUrl = imageUrl;
+    }
+    if (gdriveFileId) {
+      updateData.gdriveFileId = gdriveFileId;
+    }
+
+    const result = await updateProduct(req.params.id, updateData);
     res.json(result);
   } catch (error: any) {
+    console.error('Update product error:', error);
     res.status(404).json({ success: false, message: error.message });
   }
 });

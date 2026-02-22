@@ -20,3 +20,10 @@ prisma/migrations/
 
 # Generated Prisma Client (optional - commit if needed)
 # /src/generated/prisma
+
+# Google Drive Credentials
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!vercel.json

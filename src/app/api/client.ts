@@ -53,28 +53,26 @@ export const api = {
       return handleResponse<Product[]>(response);
     },
 
-    create: async (data: {
-      name: string;
-      description?: string;
-      basePrice: number;
-      image: string;
-      category: string;
-      featured?: boolean;
-      sizes?: Array<{ name: string; price: number }>;
-    }): Promise<ApiResponse<Product>> => {
+    create: async (data: any): Promise<ApiResponse<Product>> => {
+      // Check if data is FormData (for file upload)
+      const isFormData = data instanceof FormData;
+      
       const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+        body: isFormData ? data : JSON.stringify(data),
       });
       return handleResponse<Product>(response);
     },
 
     update: async (id: string, data: any): Promise<ApiResponse<Product>> => {
+      // Check if data is FormData (for file upload)
+      const isFormData = data instanceof FormData;
+      
       const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+        body: isFormData ? data : JSON.stringify(data),
       });
       return handleResponse<Product>(response);
     },
