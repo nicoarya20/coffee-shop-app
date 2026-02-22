@@ -48,15 +48,25 @@ function doPost(e) {
     // Set file to public (anyone with link can view)
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
-    // Get file URL
-    const fileUrl = file.getDownloadUrl();
+    // Get file ID
+    const fileId = file.getId();
+    
+    // Generate proper view URL for personal Google Drive
+    // Format: https://drive.google.com/uc?export=view&id=FILE_ID
+    const fileUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+    
+    // Get web view URL (for manual access)
+    const webViewUrl = 'https://drive.google.com/file/d/' + fileId + '/view';
+    
+    Logger.log('File uploaded: ' + file.getName() + ' (ID: ' + fileId + ')');
+    Logger.log('File URL: ' + fileUrl);
     
     // Return success response
     return jsonResponse({
       success: true,
-      fileId: file.getId(),
+      fileId: fileId,
       fileUrl: fileUrl,
-      webViewUrl: file.getUrl()
+      webViewUrl: webViewUrl
     });
     
   } catch (error) {
