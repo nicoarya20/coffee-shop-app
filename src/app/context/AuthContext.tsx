@@ -49,6 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.success) {
         setUser(response.data);
         localStorage.setItem('coffee_shop_user', JSON.stringify(response.data));
+        console.log('🔐 Login successful:', {
+          email: response.data.email,
+          role: response.data.role,
+          name: response.data.name,
+        });
       } else {
         throw new Error(response.message || 'Login failed');
       }

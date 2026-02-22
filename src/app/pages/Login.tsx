@@ -10,8 +10,8 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
-  
-  const { login } = useAuth();
+
+  const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,24 +22,29 @@ export function Login() {
     try {
       console.log('🔐 Attempting login:', { email, activeTab });
       
+      // Login and get user data
       await login(email, password);
       
-      // Get the logged in user to check role
-      const userResponse = await api.user.getProfile();
-      const loggedInUser = userResponse.data;
+      // Refresh to get latest user data with role
+      if (refreshUser) {
+        await refreshUser();
+      }
+      
+      // Get user from localStorage (already updated by refreshUser)
+      const savedUser = localStorage.getItem('coffee_shop_user');
+      const loggedInUser = savedUser ? JSON.parse(savedUser) : null;
       
       console.log('✅ Login successful:', {
-        email: loggedInUser.email,
-        role: loggedInUser.role,
-        activeTab,
+        email: loggedInUser?.email,
+        role: loggedInUser?.role,
       });
       
-      toast.success(`Welcome, ${loggedInUser.name}!`);
+      toast.success(`Welcome, ${loggedInUser?.name || 'User'}!`);
 
       // Redirect based on user role, not tab selection
       const from = (location.state as any)?.from?.pathname;
       
-      if (loggedInUser.role?.toUpperCase() === 'ADMIN') {
+      if (loggedInUser?.role?.toUpperCase() === 'ADMIN') {
         navigate('/admin', { replace: true });
         toast.info('Redirecting to Admin Dashboard');
       } else {
