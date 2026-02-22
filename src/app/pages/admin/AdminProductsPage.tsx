@@ -77,14 +77,21 @@ export function AdminProductsPage() {
 
   const handleToggleFeatured = async (product: Product) => {
     try {
+      console.log('⭐ Toggling featured for:', product.name, 'to', !product.featured);
       await api.products.update(product.id, {
-        ...product,
         featured: !product.featured,
       });
       toast.success('Product updated');
       fetchProducts();
-    } catch (error) {
-      toast.error('Failed to update product');
+    } catch (error: any) {
+      console.error('Failed to toggle featured:', error);
+      if (error.status === 404) {
+        toast.error('Server not found. Make sure the server is running (npm run server)');
+      } else if (error.status === 400) {
+        toast.error('Invalid request. Please try again.');
+      } else {
+        toast.error('Failed to update product');
+      }
     }
   };
 
