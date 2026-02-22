@@ -14,7 +14,7 @@ export function Orders() {
     try {
       if (!isSilent) setLoading(true);
       const response = await api.orders.getAll();
-      
+
       // Check for status updates on existing orders
       if (!isSilent && previousOrdersRef.current.length > 0) {
         response.data.forEach(newOrder => {
@@ -40,6 +40,16 @@ export function Orders() {
     const interval = setInterval(() => fetchOrders(true), 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Generate ticket number from order ID and timestamp
+  const generateTicketNumber = (order: Order) => {
+    const date = new Date(order.timestamp);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    const day = date.getDate().toString().padStart(2, '0');
+    const shortId = order.id.slice(-6).toUpperCase();
+    return `ORD-${year}${month}${day}-${shortId}`;
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -154,9 +164,19 @@ export function Orders() {
               {/* Order Header */}
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <p className="font-semibold text-gray-900">{order.id}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-900 text-lg">
+                      {generateTicketNumber(order)}
+                    </p>
+                    <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded">
+                      #{index + 1}
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-500 mt-1">
                     {formatDate(order.timestamp)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {order.customerName}
                   </p>
                 </div>
                 <div

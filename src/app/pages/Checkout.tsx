@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ChevronLeft, CreditCard, Wallet } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useOrders } from '../context/OrderContext';
+import { api } from '../api/client';
 import { toast } from 'sonner';
 
 export function Checkout() {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
-  const { addOrder } = useOrders();
 
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
@@ -32,15 +31,32 @@ export function Checkout() {
 
     setIsProcessing(true);
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Prepare order items for API
+      const orderItems = items.map(item => ({
+        product: { id: item.product.id },
+        quantity: item.quantity,
+        size: item.size,
+        total: item.total,
+      }));
 
-    addOrder(items, customerName, notes || undefined);
-    clearCart();
-    setIsProcessing(false);
+      // Call API to create order
+      await api.orders.create({
+        items: orderItems,
+        customerName,
+        notes: notes || undefined,
+      });
 
-    toast.success('Order placed successfully!');
-    navigate('/orders');
+      // Clear cart and show success
+      clearCart();
+      setIsProcessing(false);
+      toast.success('Order placed successfully! Check your orders.');
+      navigate('/orders');
+    } catch (error: any) {
+      console.error('Failed to place order:', error);
+      setIsProcessing(false);
+      toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
+    }
   };
 
   if (items.length === 0) {

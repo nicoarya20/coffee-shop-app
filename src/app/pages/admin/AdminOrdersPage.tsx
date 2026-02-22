@@ -73,6 +73,16 @@ export function AdminOrdersPage() {
     }).format(new Date(date));
   };
 
+  // Generate ticket number from order ID and timestamp
+  const generateTicketNumber = (order: Order) => {
+    const date = new Date(order.timestamp);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear().toString().slice(-2);
+    const day = date.getDate().toString().padStart(2, '0');
+    const shortId = order.id.slice(-6).toUpperCase();
+    return `ORD-${year}${month}${day}-${shortId}`;
+  };
+
   const getStatusInfo = (status: Order['status']) => {
     switch (status) {
       case 'pending':
@@ -200,8 +210,16 @@ export function AdminOrdersPage() {
                   {/* Order Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="font-semibold text-gray-900">{order.customerName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-gray-900">
+                          {generateTicketNumber(order)}
+                        </p>
+                        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded">
+                          #{index + 1}
+                        </span>
+                      </div>
                       <p className="text-xs text-gray-500">{formatDate(order.timestamp)}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{order.customerName}</p>
                     </div>
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${statusInfo.bg}`}>
                       <StatusIcon className={`w-3 h-3 ${statusInfo.color}`} />
