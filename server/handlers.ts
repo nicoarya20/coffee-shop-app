@@ -437,6 +437,30 @@ export async function updateProduct(id: string, data: any): Promise<{ data: any;
 export async function deleteProduct(id: string): Promise<{ success: boolean }> {
   await delay(300);
 
+  // Get product to retrieve Cloudinary public ID
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: { cloudinaryPublicId: true },
+  });
+
+  // Delete from Cloudinary if public ID exists
+  if (product?.cloudinaryPublicId) {
+    try {
+      const { deleteFile } = await import('./services/cloudinary.js');
+      const deleteResult = await deleteFile(product.cloudinaryPublicId);
+      
+      if (deleteResult.success) {
+        console.log('🗑️ Deleted image from Cloudinary:', product.cloudinaryPublicId);
+      } else {
+        console.warn('⚠️ Failed to delete from Cloudinary:', deleteResult.error);
+      }
+    } catch (error: any) {
+      console.error('❌ Cloudinary delete error:', error);
+      // Continue with product deletion even if Cloudinary fails
+    }
+  }
+
+  // Delete from database
   await prisma.product.delete({
     where: { id },
   });
