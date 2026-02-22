@@ -19,7 +19,9 @@ export function Home() {
   const fetchFeaturedProducts = async () => {
     try {
       setLoading(true);
+      console.log('📡 Fetching featured products...');
       const response = await api.products.getFeatured();
+      console.log('🌟 Featured products response:', response.data);
       setFeaturedProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch featured products:', error);
@@ -153,7 +155,14 @@ export function Home() {
           ) : (
             <div className="bg-gray-50 rounded-xl p-8 text-center">
               <p className="text-gray-500 text-sm">No featured products yet</p>
-              <Link to="/menu" className="text-amber-600 font-medium text-sm mt-2 inline-block">
+              <div className="mt-4 p-4 bg-amber-50 rounded-lg">
+                <p className="text-amber-800 text-xs font-medium mb-2">📝 For Admin:</p>
+                <p className="text-amber-700 text-xs">
+                  Go to <a href="/admin/products" className="underline font-semibold">Products Management</a> and 
+                  click "☆ Feature" on any product to mark it as featured.
+                </p>
+              </div>
+              <Link to="/menu" className="text-amber-600 font-medium text-sm mt-4 inline-block">
                 Browse Menu
               </Link>
             </div>

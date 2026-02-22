@@ -128,7 +128,16 @@ export async function getProductById(id: string): Promise<{ data: Product; succe
 }
 
 export async function getFeaturedProducts(): Promise<{ data: Product[]; success: boolean }> {
-  return getProducts(undefined, true);
+  await delay(300);
+  
+  const products = await prisma.product.findMany({
+    where: { featured: true },
+    include: { sizes: true },
+  });
+  
+  console.log('🌟 Featured products fetched:', products.length);
+  
+  return { data: products.map(mapProduct), success: true };
 }
 
 export async function getProductsByCategory(category: 'coffee' | 'tea' | 'snacks'): Promise<{ data: Product[]; success: boolean }> {
