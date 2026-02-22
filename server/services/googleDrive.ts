@@ -1,37 +1,28 @@
-import { google } from 'googleapis';
-import { Readable } from 'stream';
+/**
+ * Upload file to Google Drive via Google Apps Script
+ * 
+ * This uses Google Apps Script as a middleware to upload files
+ * to your personal Google Drive (since Service Accounts cannot
+ * upload to personal Drive without Shared Drive).
+ */
 
-const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
-const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-const GOOGLE_DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID?.split('?')[0]; // Remove query params
+const GOOGLE_APPS_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL;
 
-if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY || !GOOGLE_DRIVE_FOLDER_ID) {
-  console.warn('⚠️  Google Drive credentials not configured. File upload will not work.');
-  console.warn('📝 Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_DRIVE_FOLDER_ID in .env');
+if (!GOOGLE_APPS_SCRIPT_URL) {
+  console.warn('⚠️  GOOGLE_APPS_SCRIPT_URL not configured. File upload will not work.');
+  console.warn('📝 See google-apps-script/README.md for setup instructions');
 }
-
-// Initialize Google Drive API client
-const getDriveClient = () => {
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: GOOGLE_CLIENT_EMAIL,
-      private_key: GOOGLE_PRIVATE_KEY,
-    },
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
-  });
-
-  return google.drive({ version: 'v3', auth });
-};
 
 export interface UploadResult {
   success: boolean;
   fileId?: string;
   fileUrl?: string;
+  webViewUrl?: string;
   error?: string;
 }
 
 /**
- * Upload a file to Google Drive
+ * Upload a file to Google Drive via Google Apps Script
  * @param buffer - File buffer
  * @param filename - Original filename
  * @param mimeType - File MIME type
@@ -42,81 +33,53 @@ export async function uploadFile(
   mimeType: string
 ): Promise<UploadResult> {
   try {
-    if (!GOOGLE_DRIVE_FOLDER_ID) {
+    if (!GOOGLE_APPS_SCRIPT_URL) {
       return {
         success: false,
-        error: 'Google Drive folder ID not configured. Please set GOOGLE_DRIVE_FOLDER_ID in .env',
+        error: 'GOOGLE_APPS_SCRIPT_URL not configured. See google-apps-script/README.md for setup.',
       };
     }
 
-    const drive = getDriveClient();
+    // Convert buffer to base64
+    const fileData = buffer.toString('base64');
 
-    // Create a readable stream from the buffer
-    const bufferStream = Readable.from(buffer);
-
-    // Prepare file metadata
-    const fileMetadata = {
-      name: `${Date.now()}-${filename}`,
-      parents: [GOOGLE_DRIVE_FOLDER_ID],
-    };
-
-    // Prepare media for upload
-    const media = {
+    // Prepare request body
+    const requestBody = {
+      fileData,
+      fileName: `${Date.now()}-${filename}`,
       mimeType,
-      body: bufferStream,
     };
 
-    // Upload file
-    const response = await drive.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: 'id',
+    // Send request to Google Apps Script
+    const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
     });
 
-    const fileId = response.data.id;
-
-    if (!fileId) {
-      return {
-        success: false,
-        error: 'Failed to get file ID from Google Drive',
-      };
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    // Make file publicly accessible (for viewing)
-    await drive.permissions.create({
-      fileId,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone',
-      },
-    });
+    const result = await response.json();
 
-    // Get the file URL
-    const fileUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error || 'Failed to upload file',
+      };
+    }
 
     return {
       success: true,
-      fileId,
-      fileUrl,
+      fileId: result.fileId,
+      fileUrl: result.fileUrl,
+      webViewUrl: result.webViewUrl,
     };
   } catch (error: any) {
-    console.error('Google Drive upload error:', error);
-    
-    // Handle specific error cases
-    if (error.code === 404) {
-      return {
-        success: false,
-        error: `Google Drive folder not found. Please check:\n1. Folder ID is correct: ${GOOGLE_DRIVE_FOLDER_ID}\n2. Folder is shared with service account: ${GOOGLE_CLIENT_EMAIL}\n3. Service account has Editor permission`,
-      };
-    }
-    
-    if (error.code === 403) {
-      return {
-        success: false,
-        error: 'Permission denied. Please ensure the Google Drive folder is shared with the service account email with Editor permission.',
-      };
-    }
-
+    console.error('Google Apps Script upload error:', error);
     return {
       success: false,
       error: error.message || 'Failed to upload file to Google Drive',
@@ -125,29 +88,22 @@ export async function uploadFile(
 }
 
 /**
- * Delete a file from Google Drive
+ * Delete a file from Google Drive (not supported via Apps Script)
  * @param fileId - Google Drive file ID
  */
 export async function deleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const drive = getDriveClient();
-
-    await drive.files.delete({ fileId });
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Google Drive delete error:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to delete file from Google Drive',
-    };
-  }
+  // Deletion is not implemented in the Apps Script
+  // You can manually delete files from Google Drive
+  return { 
+    success: false, 
+    error: 'File deletion not supported. Please delete manually from Google Drive.' 
+  };
 }
 
 /**
- * Get file URL from file ID
+ * Get file URL from file ID (not applicable for Apps Script)
  * @param fileId - Google Drive file ID
  */
 export function getFileUrl(fileId: string): string {
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  return `https://drive.google.com/file/d/${fileId}/view`;
 }
