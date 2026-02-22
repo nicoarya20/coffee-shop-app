@@ -125,9 +125,9 @@ router.post('/products', upload.single('image'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'Required fields are missing' });
     }
 
-    // Handle file upload to Google Drive
+    // Handle file upload to Cloudinary
     let imageUrl = image; // Fallback to URL if provided
-    let gdriveFileId: string | undefined;
+    let cloudinaryPublicId: string | undefined;
 
     if (req.file) {
       const uploadResult = await uploadProductImage(req.file);
@@ -137,8 +137,8 @@ router.post('/products', upload.single('image'), async (req, res) => {
           message: uploadResult.error || 'Failed to upload image',
         });
       }
-      imageUrl = uploadResult.fileUrl!;
-      gdriveFileId = uploadResult.fileId;
+      imageUrl = uploadResult.imageUrl!;
+      cloudinaryPublicId = uploadResult.publicId;
     } else if (!image) {
       return res.status(400).json({
         success: false,
@@ -152,7 +152,7 @@ router.post('/products', upload.single('image'), async (req, res) => {
       basePrice: parseInt(basePrice),
       image: imageUrl,
       imageUrl,
-      gdriveFileId,
+      cloudinaryPublicId,
       category,
       featured: featured === 'true',
       sizes: sizes ? JSON.parse(sizes) : undefined,
@@ -168,9 +168,9 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
     const { name, description, basePrice, image, category, featured, sizes } = req.body;
 
-    // Handle file upload to Google Drive if new file is uploaded
+    // Handle file upload to Cloudinary if new file is uploaded
     let imageUrl = image;
-    let gdriveFileId: string | undefined;
+    let cloudinaryPublicId: string | undefined;
 
     if (req.file) {
       const uploadResult = await uploadProductImage(req.file);
@@ -180,8 +180,8 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
           message: uploadResult.error || 'Failed to upload image',
         });
       }
-      imageUrl = uploadResult.fileUrl!;
-      gdriveFileId = uploadResult.fileId;
+      imageUrl = uploadResult.imageUrl!;
+      cloudinaryPublicId = uploadResult.publicId;
     }
 
     const updateData: any = {
@@ -198,8 +198,8 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
       updateData.image = imageUrl;
       updateData.imageUrl = imageUrl;
     }
-    if (gdriveFileId) {
-      updateData.gdriveFileId = gdriveFileId;
+    if (cloudinaryPublicId) {
+      updateData.cloudinaryPublicId = cloudinaryPublicId;
     }
 
     const result = await updateProduct(req.params.id, updateData);

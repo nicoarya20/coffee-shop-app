@@ -222,50 +222,13 @@ export function AdminProductsPage() {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-32 rounded-lg object-cover"
-                  crossOrigin="anonymous"
+                  loading="lazy"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
-                    const currentSrc = img.src;
-                    
                     // Skip if already using placeholder
-                    if (currentSrc.includes('placehold.co')) return;
+                    if (img.src.includes('placehold.co')) return;
                     
-                    // Check if 429 rate limit
-                    if (currentSrc.includes('drive.google.com') || currentSrc.includes('googleusercontent.com')) {
-                      const fileId = currentSrc.match(/id=([^&/]+)/)?.[1] || currentSrc.match(/\/d\/([^/]+)/)?.[1] || currentSrc.match(/\/([^/?]+)/)?.[1];
-                      
-                      if (fileId) {
-                        // Add cache-busting timestamp to bypass CDN cache
-                        const timestamp = Date.now();
-                        
-                        // Try different URL formats with cache-bust
-                        if (!img.dataset.retryCount) {
-                          img.dataset.retryCount = '1';
-                          
-                          // First retry: drive.google.com with export=download
-                          console.log('🔄 Retry 1/3 - download format:', fileId);
-                          img.src = `https://drive.google.com/uc?export=download&id=${fileId}&cache=${timestamp}`;
-                          return;
-                        } else if (img.dataset.retryCount === '1') {
-                          img.dataset.retryCount = '2';
-                          
-                          // Second retry: drive.google.com with export=view
-                          console.log('🔄 Retry 2/3 - view format:', fileId);
-                          img.src = `https://drive.google.com/uc?export=view&id=${fileId}&cache=${timestamp}`;
-                          return;
-                        } else if (img.dataset.retryCount === '2') {
-                          img.dataset.retryCount = '3';
-                          
-                          // Third retry: lh3.googleusercontent.com with cache-bust
-                          console.log('🔄 Retry 3/3 - direct link:', fileId);
-                          img.src = `https://lh3.googleusercontent.com/d/${fileId}?cache=${timestamp}`;
-                          return;
-                        }
-                      }
-                    }
-                    
-                    // Final fallback: placeholder
-                    console.error('❌ Failed to load image after all retries:', product.image);
+                    console.error('❌ Failed to load image:', product.image);
                     img.src = 'https://placehold.co/400x300/f59e0b/ffffff?text=No+Image';
                   }}
                 />

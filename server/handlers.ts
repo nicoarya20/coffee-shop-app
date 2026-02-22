@@ -1,6 +1,6 @@
 import { PrismaClient, OrderStatus, Role, Category as PrismaCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { uploadFile } from './services/googleDrive.js';
+import { uploadFile as uploadToCloudinary } from './services/cloudinary.js';
 import { File } from 'multer';
 
 const prisma = new PrismaClient();
@@ -362,7 +362,7 @@ export async function createProduct(data: {
   basePrice: number;
   image: string;
   imageUrl?: string;
-  gdriveFileId?: string;
+  cloudinaryPublicId?: string;
   category: string;
   featured?: boolean;
   sizes?: Array<{ name: string; price: number }>;
@@ -376,7 +376,7 @@ export async function createProduct(data: {
       basePrice: data.basePrice,
       image: data.image,
       imageUrl: data.imageUrl || data.image,
-      gdriveFileId: data.gdriveFileId,
+      cloudinaryPublicId: data.cloudinaryPublicId,
       category: data.category as any,
       featured: data.featured || false,
       sizes: data.sizes ? {
@@ -410,8 +410,8 @@ export async function updateProduct(id: string, data: any): Promise<{ data: any;
   if (data.imageUrl !== undefined) {
     updateData.imageUrl = data.imageUrl;
   }
-  if (data.gdriveFileId !== undefined) {
-    updateData.gdriveFileId = data.gdriveFileId;
+  if (data.cloudinaryPublicId !== undefined) {
+    updateData.cloudinaryPublicId = data.cloudinaryPublicId;
   }
 
   // Handle sizes
@@ -445,13 +445,13 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
 }
 
 /**
- * Upload product image to Google Drive
+ * Upload product image to Cloudinary
  * @param file - Multer file object
  */
 export async function uploadProductImage(file: File): Promise<{
   success: boolean;
-  fileId?: string;
-  fileUrl?: string;
+  imageUrl?: string;
+  publicId?: string;
   error?: string;
 }> {
   if (!file) {
@@ -480,6 +480,6 @@ export async function uploadProductImage(file: File): Promise<{
     return { success: false, error: 'File size must be less than 5MB' };
   }
 
-  // Upload to Google Drive
-  return uploadFile(file.buffer, file.originalname, file.mimetype);
+  // Upload to Cloudinary
+  return uploadToCloudinary(file.buffer, file.originalname, file.mimetype);
 }
