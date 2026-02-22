@@ -273,15 +273,19 @@ router.post('/orders', async (req, res) => {
 router.patch('/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['pending', 'preparing', 'ready', 'completed'];
-    
+    const validStatuses = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
+
+    console.log('📝 Updating order status:', { orderId: req.params.id, status });
+
     if (!status || !validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Valid status is required' });
     }
 
     const result = await updateOrderStatus(req.params.id, status);
+    console.log('✅ Order status updated:', result.data);
     res.json(result);
   } catch (error: any) {
+    console.error('❌ Update order status error:', error);
     res.status(404).json({ success: false, message: error.message });
   }
 });
