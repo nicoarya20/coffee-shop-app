@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -25,6 +26,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setLoading(false);
   }, []);
+
+  const refreshUser = async () => {
+    try {
+      const response = await api.user.getProfile();
+      if (response.success) {
+        setUser(response.data);
+        localStorage.setItem('coffee_shop_user', JSON.stringify(response.data));
+        console.log('🔄 User refreshed:', { 
+          name: response.data.name, 
+          loyaltyPoints: response.data.loyaltyPoints 
+        });
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
@@ -64,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

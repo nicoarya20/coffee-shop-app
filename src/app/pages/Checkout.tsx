@@ -31,6 +31,12 @@ export function Checkout() {
       return;
     }
 
+    // Check if user is logged in
+    if (!user?.id) {
+      toast.error('Please login to earn loyalty points!');
+      // Continue without userId - order will still be created
+    }
+
     setIsProcessing(true);
 
     try {
@@ -42,25 +48,33 @@ export function Checkout() {
         total: item.total,
       }));
 
+      const orderData = {
+        items: orderItems,
+        customerName,
+        notes: notes || undefined,
+        userId: user?.id || undefined,
+      };
+
       console.log('📝 Placing order:', {
         userId: user?.id,
         customerName,
         total,
         itemCount: items.length,
+        willEarnPoints: user?.id ? Math.floor(total / 1000) : 0,
       });
 
       // Call API to create order with userId
-      await api.orders.create({
-        items: orderItems,
-        customerName,
-        notes: notes || undefined,
-        userId: user?.id || undefined,
-      });
+      await api.orders.create(orderData);
 
       // Clear cart and show success
       clearCart();
       setIsProcessing(false);
-      toast.success('Order placed successfully! You will earn loyalty points when order is completed.');
+      
+      const pointsMessage = user?.id 
+        ? `You will earn ~${Math.floor(total / 1000)} points when completed!`
+        : 'Login to earn loyalty points next time!';
+      
+      toast.success(`Order placed! ${pointsMessage}`);
       navigate('/orders');
     } catch (error: any) {
       console.error('Failed to place order:', error);

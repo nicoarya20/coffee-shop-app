@@ -35,20 +35,18 @@ export function Profile() {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [lastPointsCount, setLastPointsCount] = useState(0);
 
+  // Initial fetch
   useEffect(() => {
     fetchPointsHistory();
-    // Refresh points data when component mounts
+    // Refresh user data on mount
     if (refreshUser) {
       refreshUser();
     }
     
-    // Poll for points updates every 5 seconds
+    // Poll for points updates every 10 seconds (not 5 to reduce flickering)
     const interval = setInterval(() => {
-      if (refreshUser) {
-        refreshUser();
-      }
-      fetchPointsHistory();
-    }, 5000);
+      fetchPointsHistory(true); // Silent refresh
+    }, 10000);
     
     return () => clearInterval(interval);
   }, []);
@@ -66,16 +64,22 @@ export function Profile() {
     }
   }, [user?.loyaltyPoints]);
 
-  const fetchPointsHistory = async () => {
-    try {
+  const fetchPointsHistory = async (silent = false) => {
+    if (!silent) {
       setLoadingPoints(true);
+    }
+    try {
       const response = await api.user.getPointsHistory();
       setPointsHistory(response.data);
-      console.log('📊 Points history loaded:', response.data.length, 'entries');
+      if (!silent) {
+        console.log('📊 Points history loaded:', response.data.length, 'entries');
+      }
     } catch (error) {
       console.error('Failed to fetch points history:', error);
     } finally {
-      setLoadingPoints(false);
+      if (!silent) {
+        setLoadingPoints(false);
+      }
     }
   };
 
