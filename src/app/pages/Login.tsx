@@ -20,13 +20,33 @@ export function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      toast.success('Login successful!');
+      console.log('🔐 Attempting login:', { email, activeTab });
       
-      // Redirect based on role or previous location
-      const from = (location.state as any)?.from?.pathname || (activeTab === 'admin' ? '/admin' : '/');
-      navigate(from, { replace: true });
+      await login(email, password);
+      
+      // Get the logged in user to check role
+      const userResponse = await api.user.getProfile();
+      const loggedInUser = userResponse.data;
+      
+      console.log('✅ Login successful:', {
+        email: loggedInUser.email,
+        role: loggedInUser.role,
+        activeTab,
+      });
+      
+      toast.success(`Welcome, ${loggedInUser.name}!`);
+
+      // Redirect based on user role, not tab selection
+      const from = (location.state as any)?.from?.pathname;
+      
+      if (loggedInUser.role?.toUpperCase() === 'ADMIN') {
+        navigate('/admin', { replace: true });
+        toast.info('Redirecting to Admin Dashboard');
+      } else {
+        navigate(from || '/', { replace: true });
+      }
     } catch (error: any) {
+      console.error('Login failed:', error);
       toast.error(error.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
@@ -61,8 +81,8 @@ export function Login() {
             <button
               onClick={() => setActiveTab('user')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-xl transition-all ${
-                activeTab === 'user' 
-                ? 'bg-white text-amber-600 shadow-sm' 
+                activeTab === 'user'
+                ? 'bg-white text-amber-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -72,14 +92,29 @@ export function Login() {
             <button
               onClick={() => setActiveTab('admin')}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-xl transition-all ${
-                activeTab === 'admin' 
-                ? 'bg-white text-purple-600 shadow-sm' 
+                activeTab === 'admin'
+                ? 'bg-white text-purple-600 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
               Admin
             </button>
+          </div>
+
+          {/* Info Box */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+            <p className="text-xs text-blue-800 font-medium mb-2">📝 Demo Credentials:</p>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div className="flex justify-between">
+                <span><strong>User:</strong> user@coffee.com</span>
+                <span>userpassword</span>
+              </div>
+              <div className="flex justify-between">
+                <span><strong>Admin:</strong> admin@coffee.com</span>
+                <span>adminpassword</span>
+              </div>
+            </div>
           </div>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
