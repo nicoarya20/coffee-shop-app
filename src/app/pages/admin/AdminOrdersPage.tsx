@@ -93,6 +93,8 @@ export function AdminOrdersPage() {
         return { icon: Package, text: 'Ready', color: 'text-green-600', bg: 'bg-green-100' };
       case 'completed':
         return { icon: CheckCircle, text: 'Completed', color: 'text-gray-600', bg: 'bg-gray-100' };
+      case 'cancelled':
+        return { icon: Clock, text: 'Cancelled', color: 'text-red-600', bg: 'bg-red-100' };
     }
   };
 
@@ -100,6 +102,7 @@ export function AdminOrdersPage() {
     if (orderFilter === 'pending') return order.status === 'pending';
     if (orderFilter === 'active') return ['preparing', 'ready'].includes(order.status);
     if (orderFilter === 'completed') return order.status === 'completed';
+    if (orderFilter === 'cancelled') return order.status === 'cancelled';
     return true;
   });
 
@@ -107,7 +110,8 @@ export function AdminOrdersPage() {
     pending: orders.filter(o => o.status === 'pending').length,
     active: orders.filter(o => ['preparing', 'ready'].includes(o.status)).length,
     completed: orders.filter(o => o.status === 'completed').length,
-    // Revenue hanya dari completed orders
+    cancelled: orders.filter(o => o.status === 'cancelled').length,
+    // Revenue hanya dari completed orders (BUKAN cancelled)
     revenue: orders
       .filter(o => o.status === 'completed')
       .reduce((sum, o) => sum + o.total, 0),
@@ -168,6 +172,7 @@ export function AdminOrdersPage() {
             { id: 'pending', label: 'Pending', count: stats.pending },
             { id: 'active', label: 'Active', count: stats.active },
             { id: 'completed', label: 'Completed', count: stats.completed },
+            { id: 'cancelled', label: 'Cancelled', count: stats.cancelled },
           ].map((filter) => (
             <button
               key={filter.id}
@@ -272,8 +277,8 @@ export function AdminOrdersPage() {
                           Start Preparing
                         </button>
                         <button
-                          onClick={() => updateOrderStatus(order.id, 'completed')}
-                          className="bg-gray-500 text-white rounded-lg py-2 font-medium text-sm active:scale-95 transition-transform"
+                          onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                          className="bg-red-500 text-white rounded-lg py-2 font-medium text-sm active:scale-95 transition-transform"
                         >
                           Cancel Order
                         </button>
@@ -301,6 +306,12 @@ export function AdminOrdersPage() {
                     {order.status === 'completed' && (
                       <div className="text-center py-2 text-sm text-gray-500">
                         Order completed
+                      </div>
+                    )}
+
+                    {order.status === 'cancelled' && (
+                      <div className="text-center py-2 text-sm text-red-500 font-medium">
+                        Order cancelled
                       </div>
                     )}
                   </div>

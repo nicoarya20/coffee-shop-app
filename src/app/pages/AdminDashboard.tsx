@@ -133,7 +133,8 @@ export function AdminDashboard() {
     pendingOrders: orders.filter(o => o.status === 'pending').length,
     activeOrders: orders.filter(o => ['preparing', 'ready'].includes(o.status)).length,
     completedOrders: orders.filter(o => o.status === 'completed').length,
-    // Revenue hanya dari orders yang sudah completed
+    cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
+    // Revenue hanya dari orders yang sudah completed (BUKAN cancelled)
     totalRevenue: orders
       .filter(o => o.status === 'completed')
       .reduce((sum, o) => sum + o.total, 0),

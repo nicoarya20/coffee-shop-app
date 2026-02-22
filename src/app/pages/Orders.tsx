@@ -103,6 +103,13 @@ export function Orders() {
           color: 'text-gray-600',
           bg: 'bg-gray-100',
         };
+      case 'cancelled':
+        return {
+          icon: Clock,
+          text: 'Cancelled',
+          color: 'text-red-600',
+          bg: 'bg-red-100',
+        };
     }
   };
 
