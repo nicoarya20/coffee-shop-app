@@ -240,8 +240,8 @@ export function AdminProductsPage() {
                   }}
                 />
                 {product.featured && (
-                  <span className="absolute top-1 right-1 bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-current" />
+                  <span className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-amber-400 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg shadow-yellow-400/50">
+                    <Star className="w-3 h-3 fill-current animate-pulse" />
                     Featured
                   </span>
                 )}
@@ -261,23 +261,26 @@ export function AdminProductsPage() {
               <div className="flex gap-1 border-t border-gray-100 pt-2">
                 <button
                   onClick={() => handleToggleFeatured(product)}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium transition-colors ${
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1 ${
                     product.featured
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-gradient-to-r from-yellow-400 to-amber-400 text-white shadow-lg shadow-yellow-400/50 scale-105'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {product.featured ? '★ Featured' : '☆ Feature'}
+                  <span className={product.featured ? 'animate-pulse' : ''}>
+                    {product.featured ? '★' : '☆'}
+                  </span>
+                  {product.featured ? 'Featured' : 'Feature'}
                 </button>
                 <button
                   onClick={() => handleEditProduct(product)}
-                  className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                  className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteProduct(product.id)}
-                  className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
