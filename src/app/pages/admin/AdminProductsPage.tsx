@@ -38,7 +38,7 @@ export function AdminProductsPage() {
       if (!isSilent) setLoading(true);
       const response = await api.products.getAll();
       console.log('📥 Fetched products:', response.data);
-      response.data.forEach(product => {
+      response.data.forEach((product: Product) => {
         console.log(`  - ${product.name}: image URL =`, product.image);
       });
       setProducts(response.data);
