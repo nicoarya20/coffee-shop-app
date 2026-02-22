@@ -201,7 +201,7 @@ export function AdminOrdersPage() {
               <p className="text-gray-500">No orders found</p>
             </div>
           ) : (
-            filteredOrders.map((order) => {
+            filteredOrders.map((order, index) => {
               const statusInfo = getStatusInfo(order.status);
               const StatusIcon = statusInfo.icon;
 

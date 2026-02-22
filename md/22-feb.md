@@ -50,30 +50,23 @@ This command starts both the Vite frontend and the Express backend simultaneousl
 
 Saya telah melakukan konfigurasi berikut untuk memperbaikinya:
 
+1.  `vercel.json`: Membuat file konfigurasi untuk memberi tahu Vercel agar meneruskan semua permintaan yang dimulai dengan /api ke
+    fungsi serverless.
+2.  `api/index.js`: Membuat entry point untuk Vercel agar bisa menjalankan server Express kamu sebagai Serverless Function.
+3.  `server/index.ts`: Menyesuaikan server agar tidak mencoba menjalankan app.listen (membuka port) saat berada di lingkungan produksi
+    (Vercel), karena Vercel yang akan menangani eksekusinya.
+4.  `src/app/api/client.ts`: Membuat URL API lebih fleksibel dengan dukungan variabel lingkungan VITE_API_URL.
 
-   1. `vercel.json`: Membuat file konfigurasi untuk memberi tahu Vercel agar meneruskan semua permintaan yang dimulai dengan /api ke
-      fungsi serverless.
-   2. `api/index.js`: Membuat entry point untuk Vercel agar bisa menjalankan server Express kamu sebagai Serverless Function.
-   3. `server/index.ts`: Menyesuaikan server agar tidak mencoba menjalankan app.listen (membuka port) saat berada di lingkungan produksi
-      (Vercel), karena Vercel yang akan menangani eksekusinya.
-   4. `src/app/api/client.ts`: Membuat URL API lebih fleksibel dengan dukungan variabel lingkungan VITE_API_URL.
+Langkah selanjutnya yang harus kamu lakukan:
 
-  Langkah selanjutnya yang harus kamu lakukan:
+1.  Commit dan Push perubahan ini ke GitHub:
 
-   1. Commit dan Push perubahan ini ke GitHub:
+1 git add .
+2 git commit -m "fix: vercel deployment configuration for express api"
+3 git push origin fix-vercel 2. Tunggu proses deployment di dashboard Vercel selesai. 3. Pastikan Environment Variables di Vercel sudah benar, terutama DATABASE_URL (dan DIRECT_URL jika menggunakan Supabase/Neon). 4. Generate Prisma Client: Pastikan di Vercel ada command prisma generate yang dijalankan saat build. Kamu bisa menambahkannya di
+package.json pada bagian build: "build": "prisma generate && vite build".
 
-
-   1     git add .
-   2     git commit -m "fix: vercel deployment configuration for express api"
-   3     git push origin fix-vercel
-   2. Tunggu proses deployment di dashboard Vercel selesai.
-   3. Pastikan Environment Variables di Vercel sudah benar, terutama DATABASE_URL (dan DIRECT_URL jika menggunakan Supabase/Neon).
-   4. Generate Prisma Client: Pastikan di Vercel ada command prisma generate yang dijalankan saat build. Kamu bisa menambahkannya di
-      package.json pada bagian build: "build": "prisma generate && vite build".
-
-
-  Apakah kamu ingin saya sekalian memperbarui package.json agar otomatis menjalankan prisma generate saat build di Vercel?
-
+Apakah kamu ingin saya sekalian memperbarui package.json agar otomatis menjalankan prisma generate saat build di Vercel?
 
 ✅ DONE! Masalah order sudah di-fix!
 
@@ -91,7 +84,7 @@ Saya telah melakukan konfigurasi berikut untuk memperbaikinya:
 
      1 // BEFORE: Local state only
      2 addOrder(items, customerName, notes);
-     3 
+     3
      4 // AFTER: Call API to save to database
      5 await api.orders.create({
      6   items: orderItems,
@@ -158,3 +151,250 @@ Saya telah melakukan konfigurasi berikut untuk memperbaikinya:
         - Order muncul dengan badge 🔔
         - Ticket number sama
         - Customer name terlihat ✅
+
+
+        ✦ Semua task sudah selesai, sekarang saya akan buat summary lengkap untuk dokumentasi perubahan yang sudah dilakukan.
+
+✦ ✅ DONE! Order Cancellation sudah di-fix!
+
+    ---
+
+    📊 Summary Perbaikan Order Cancellation
+
+    ❌ Masalah Sebelumnya:
+
+     1. Tidak ada status CANCELLED
+        - Cancel order pakai status COMPLETED → SALAH!
+
+     2. Revenue bertambah saat cancel
+        - Order cancelled dihitung sebagai revenue → SALAH!
+
+     3. Status display salah
+        - Order cancelled tampil sebagai "Completed" → SALAH!
+
+    ---
+
+    ✅ Yang Sudah Difix:
+
+    1. Schema Update
+
+     1 enum OrderStatus {
+     2   PENDING
+     3   PREPARING
+     4   READY
+     5   COMPLETED
+     6   CANCELLED  // ← ADDED
+     7 }
+
+    2. Revenue Calculation
+
+     1 // Revenue hanya dari COMPLETED orders (BUKAN cancelled)
+     2 totalRevenue: orders
+     3   .filter(o => o.status === 'completed')  // ← Filter completed only
+     4   .reduce((sum, o) => sum + o.total, 0);
+
+    3. Cancel Button
+
+     1 // BEFORE: Set status to 'completed' (SALAH!)
+     2 onClick={() => updateOrderStatus(order.id, 'completed')}
+     3
+     4 // AFTER: Set status to 'cancelled' (BENAR!)
+     5 onClick={() => updateOrderStatus(order.id, 'cancelled')}
+
+    4. UI Status Display
+
+
+    ┌───────────┬─────────────┬──────┬───────────┐
+    │ Status    │ Badge Color │ Icon │ Text      │
+    ├───────────┼─────────────┼──────┼───────────┤
+    │ PENDING   │ Yellow      │ ⏰   │ Pending   │
+    │ PREPARING │ Blue        │ 👨‍🍳   │ Preparing │
+    │ READY     │ Green       │ 📦   │ Ready     │
+    │ COMPLETED │ Gray        │ ✅   │ Completed │
+    │ CANCELLED │ RED         │ ⏰   │ Cancelled │
+    └───────────┴─────────────┴──────┴───────────┘
+
+
+    5. Filter Tabs
+     - All
+     - Pending
+     - Active
+     - Completed
+     - Cancelled ← NEW
+
+    ---
+
+    🔄 Order Status Flow (Corrected):
+
+     1 ┌──────────────────────────────────────────────────┐
+     2 │              ORDER STATUS FLOW                    │
+     3 ├──────────────────────────────────────────────────┤
+     4 │                                                   │
+     5 │  PENDING                                          │
+     6 │    ├─→ PREPARING → READY → COMPLETED (Revenue ✅)│
+     7 │    └─→ CANCELLED (No Revenue ❌)                 │
+     8 │                                                   │
+     9 └──────────────────────────────────────────────────┘
+
+    ---
+
+    🧪 Test Cancellation:
+
+     1. Admin Cancel Order:
+        - Buka /admin/orders
+        - Order PENDING → Click "Cancel Order" (button merah)
+        - Status berubah jadi CANCELLED ✅
+        - Badge merah dengan text "Cancelled" ✅
+
+     2. Check Revenue:
+        - Dashboard revenue TIDAK bertambah ✅
+        - Hanya order COMPLETED yang dihitung ✅
+
+     3. Filter Cancelled:
+        - Click tab "Cancelled"
+        - Hanya tampil order yang di-cancel ✅
+
+     4. User View:
+        - User lihat order dengan status "Cancelled" ✅
+        - Badge merah ✅
+
+    ---
+
+    📝 Files Changed:
+
+
+    ┌──────────────────────┬──────────────────────────────────┐
+    │ File                 │ Changes                          │
+    ├──────────────────────┼──────────────────────────────────┤
+    │ prisma/schema.prisma │ Added CANCELLED to enum          │
+    │ AdminDashboard.tsx   │ Revenue filter + cancelled count │
+    │ AdminOrdersPage.tsx  │ Cancel logic + UI + filter       │
+    │ Orders.tsx           │ Cancelled status mapping         │
+    └──────────────────────┴──────────────────────────────────┘
+
+    ---
+
+    Refresh browser dan test cancel order sekarang! Revenue tidak akan bertambah saat order di-cancel. 🎉
+
+    ✦ Semua task sudah selesai, sekarang saya akan buat summary lengkap untuk dokumentasi perubahan yang sudah dilakukan.
+
+✦ ✅ DONE! Order Cancellation sudah di-fix!
+
+    ---
+
+    📊 Summary Perbaikan Order Cancellation
+
+    ❌ Masalah Sebelumnya:
+
+     1. Tidak ada status CANCELLED
+        - Cancel order pakai status COMPLETED → SALAH!
+
+     2. Revenue bertambah saat cancel
+        - Order cancelled dihitung sebagai revenue → SALAH!
+
+     3. Status display salah
+        - Order cancelled tampil sebagai "Completed" → SALAH!
+
+    ---
+
+    ✅ Yang Sudah Difix:
+
+    1. Schema Update
+
+     1 enum OrderStatus {
+     2   PENDING
+     3   PREPARING
+     4   READY
+     5   COMPLETED
+     6   CANCELLED  // ← ADDED
+     7 }
+
+    2. Revenue Calculation
+
+     1 // Revenue hanya dari COMPLETED orders (BUKAN cancelled)
+     2 totalRevenue: orders
+     3   .filter(o => o.status === 'completed')  // ← Filter completed only
+     4   .reduce((sum, o) => sum + o.total, 0);
+
+    3. Cancel Button
+
+     1 // BEFORE: Set status to 'completed' (SALAH!)
+     2 onClick={() => updateOrderStatus(order.id, 'completed')}
+     3
+     4 // AFTER: Set status to 'cancelled' (BENAR!)
+     5 onClick={() => updateOrderStatus(order.id, 'cancelled')}
+
+    4. UI Status Display
+
+
+    ┌───────────┬─────────────┬──────┬───────────┐
+    │ Status    │ Badge Color │ Icon │ Text      │
+    ├───────────┼─────────────┼──────┼───────────┤
+    │ PENDING   │ Yellow      │ ⏰   │ Pending   │
+    │ PREPARING │ Blue        │ 👨‍🍳   │ Preparing │
+    │ READY     │ Green       │ 📦   │ Ready     │
+    │ COMPLETED │ Gray        │ ✅   │ Completed │
+    │ CANCELLED │ RED         │ ⏰   │ Cancelled │
+    └───────────┴─────────────┴──────┴───────────┘
+
+
+    5. Filter Tabs
+     - All
+     - Pending
+     - Active
+     - Completed
+     - Cancelled ← NEW
+
+    ---
+
+    🔄 Order Status Flow (Corrected):
+
+     1 ┌──────────────────────────────────────────────────┐
+     2 │              ORDER STATUS FLOW                    │
+     3 ├──────────────────────────────────────────────────┤
+     4 │                                                   │
+     5 │  PENDING                                          │
+     6 │    ├─→ PREPARING → READY → COMPLETED (Revenue ✅)│
+     7 │    └─→ CANCELLED (No Revenue ❌)                 │
+     8 │                                                   │
+     9 └──────────────────────────────────────────────────┘
+
+    ---
+
+    🧪 Test Cancellation:
+
+     1. Admin Cancel Order:
+        - Buka /admin/orders
+        - Order PENDING → Click "Cancel Order" (button merah)
+        - Status berubah jadi CANCELLED ✅
+        - Badge merah dengan text "Cancelled" ✅
+
+     2. Check Revenue:
+        - Dashboard revenue TIDAK bertambah ✅
+        - Hanya order COMPLETED yang dihitung ✅
+
+     3. Filter Cancelled:
+        - Click tab "Cancelled"
+        - Hanya tampil order yang di-cancel ✅
+
+     4. User View:
+        - User lihat order dengan status "Cancelled" ✅
+        - Badge merah ✅
+
+    ---
+
+    📝 Files Changed:
+
+
+    ┌──────────────────────┬──────────────────────────────────┐
+    │ File                 │ Changes                          │
+    ├──────────────────────┼──────────────────────────────────┤
+    │ prisma/schema.prisma │ Added CANCELLED to enum          │
+    │ AdminDashboard.tsx   │ Revenue filter + cancelled count │
+    │ AdminOrdersPage.tsx  │ Cancel logic + UI + filter       │
+    │ Orders.tsx           │ Cancelled status mapping         │
+    └──────────────────────┴──────────────────────────────────┘
+
+    ---
+
+    Refresh browser dan test cancel order sekarang! Revenue tidak akan bertambah saat order di-cancel. 🎉
