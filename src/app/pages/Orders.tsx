@@ -49,14 +49,18 @@ export function Orders() {
     }).format(price);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: any) => {
+    if (!date) return 'Invalid date';
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Invalid date';
+    
     return new Intl.DateTimeFormat('id-ID', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(dateObj);
   };
 
   const getStatusInfo = (status: Order['status']) => {
