@@ -1,13 +1,32 @@
 import { motion } from 'motion/react';
 import { ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router';
-import { products } from '../data/products';
 import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { api } from '../api/client';
+import { Product } from '../types';
+import { useState, useEffect } from 'react';
 
 export function Home() {
   const { addToCart } = useCart();
-  const featuredProducts = products.filter((p) => p.featured);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await api.products.getFeatured();
+      setFeaturedProducts(response.data);
+    } catch (error) {
+      console.error('Failed to fetch featured products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const categories = [
     { name: 'Coffee', icon: '☕', path: '/menu?category=coffee' },
@@ -48,11 +67,14 @@ export function Home() {
             transition={{ delay: 0.3 }}
             className="relative"
           >
-            <input
-              type="text"
-              placeholder="Search coffee, tea, snacks..."
-              className="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-amber-100 focus:outline-none focus:ring-2 focus:ring-white/50"
-            />
+            <Link to="/menu">
+              <input
+                type="text"
+                placeholder="Search coffee, tea, snacks..."
+                className="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-amber-100 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
+                readOnly
+              />
+            </Link>
           </motion.div>
         </div>
       </motion.div>
@@ -105,15 +127,37 @@ export function Home() {
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={() => addToCart(product)}
-              />
-            ))}
-          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm overflow-hidden animate-pulse">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={() => addToCart(product)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-8 text-center">
+              <p className="text-gray-500 text-sm">No featured products yet</p>
+              <Link to="/menu" className="text-amber-600 font-medium text-sm mt-2 inline-block">
+                Browse Menu
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Promo Banner */}
