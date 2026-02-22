@@ -274,17 +274,29 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
 
   // Award loyalty points when order is completed
   if (statusMap[status] === 'COMPLETED' && currentOrder?.status !== 'COMPLETED') {
+    console.log('🎯 Order completed, calculating points...', {
+      orderId: order.id,
+      userId: order.userId,
+      customerName: order.customerName,
+      itemCount: order.items.length,
+    });
+    
     const pointsEarned = calculateLoyaltyPoints(order);
     
-    if (pointsEarned > 0) {
+    console.log('📊 Points calculated:', {
+      basePoints: pointsEarned,
+      hasUserId: !!order.userId,
+    });
+    
+    if (pointsEarned > 0 && order.userId) {
       // Update user points
-      await prisma.user.update({
-        where: { id: order.userId! },
+      const updatedUser = await prisma.user.update({
+        where: { id: order.userId },
         data: { loyaltyPoints: { increment: pointsEarned } },
       });
 
       // Create points history
-      await prisma.pointsHistory.create({
+      const historyEntry = await prisma.pointsHistory.create({
         data: {
           userId: order.userId!,
           points: pointsEarned,
@@ -294,7 +306,14 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
         },
       });
 
-      console.log(`🎉 Awarded ${pointsEarned} points to user ${order.userId}`);
+      console.log(`🎉 Awarded ${pointsEarned} points to user ${order.userId}`, {
+        newTotal: updatedUser.loyaltyPoints,
+        historyId: historyEntry.id,
+      });
+    } else if (!order.userId) {
+      console.warn('⚠️ Order has no userId, points not awarded:', order.id);
+    } else {
+      console.log('ℹ️ No points awarded (pointsEarned = 0)');
     }
   }
 

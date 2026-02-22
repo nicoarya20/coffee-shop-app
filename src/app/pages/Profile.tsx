@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Coffee,
   Gift,
+  RefreshCw,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
@@ -32,6 +33,7 @@ export function Profile() {
   const navigate = useNavigate();
   const [pointsHistory, setPointsHistory] = useState<PointsHistory[]>([]);
   const [loadingPoints, setLoadingPoints] = useState(false);
+  const [lastPointsCount, setLastPointsCount] = useState(0);
 
   useEffect(() => {
     fetchPointsHistory();
@@ -39,18 +41,51 @@ export function Profile() {
     if (refreshUser) {
       refreshUser();
     }
+    
+    // Poll for points updates every 5 seconds
+    const interval = setInterval(() => {
+      if (refreshUser) {
+        refreshUser();
+      }
+      fetchPointsHistory();
+    }, 5000);
+    
+    return () => clearInterval(interval);
   }, []);
+
+  // Check if points changed and show notification
+  useEffect(() => {
+    if (user && user.loyaltyPoints !== lastPointsCount && lastPointsCount !== 0) {
+      const pointsGained = user.loyaltyPoints - lastPointsCount;
+      if (pointsGained > 0) {
+        toast.success(`🎉 You earned ${pointsGained} loyalty points!`);
+      }
+    }
+    if (user) {
+      setLastPointsCount(user.loyaltyPoints);
+    }
+  }, [user?.loyaltyPoints]);
 
   const fetchPointsHistory = async () => {
     try {
       setLoadingPoints(true);
       const response = await api.user.getPointsHistory();
       setPointsHistory(response.data);
+      console.log('📊 Points history loaded:', response.data.length, 'entries');
     } catch (error) {
       console.error('Failed to fetch points history:', error);
     } finally {
       setLoadingPoints(false);
     }
+  };
+
+  const handleRefreshPoints = async () => {
+    console.log('🔄 Refreshing points data...');
+    if (refreshUser) {
+      await refreshUser();
+    }
+    await fetchPointsHistory();
+    toast.success('Points data refreshed');
   };
 
   if (!user) return null;
@@ -144,6 +179,13 @@ export function Profile() {
                 </p>
               </div>
             </div>
+            <button
+              onClick={handleRefreshPoints}
+              className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              title="Refresh points"
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Points Stats */}
