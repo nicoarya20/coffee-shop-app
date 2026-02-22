@@ -447,9 +447,21 @@ export async function uploadProductImage(file: File): Promise<{
     return { success: false, error: 'No file provided' };
   }
 
-  // Validate file type
-  if (!file.mimetype.startsWith('image/')) {
-    return { success: false, error: 'Only image files are allowed' };
+  console.log('📁 File upload info:', {
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size,
+    bufferLength: file.buffer.length,
+  });
+
+  // Validate file type - accept all image types including webp
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+  if (!allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+    console.error('❌ Invalid file type:', file.mimetype);
+    return { 
+      success: false, 
+      error: `Invalid file type: ${file.mimetype}. Allowed: JPEG, PNG, GIF, WEBP, SVG` 
+    };
   }
 
   // Validate file size (5MB)

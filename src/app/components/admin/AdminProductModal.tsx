@@ -54,9 +54,17 @@ export function AdminProductModal({ product, onClose, onSave }: AdminProductModa
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      console.log('📂 Selected file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+      });
+
+      // Validate file type - accept all image types
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        toast.error(`Invalid file type: ${file.type}. Please use JPEG, PNG, GIF, WEBP, or SVG`);
         return;
       }
       // Validate file size (5MB)
@@ -69,6 +77,11 @@ export function AdminProductModal({ product, onClose, onSave }: AdminProductModa
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        console.log('✅ Image preview loaded');
+      };
+      reader.onerror = (error) => {
+        console.error('❌ Failed to read file:', error);
+        toast.error('Failed to load image preview');
       };
       reader.readAsDataURL(file);
     }

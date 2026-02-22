@@ -57,6 +57,17 @@ export const api = {
       // Check if data is FormData (for file upload)
       const isFormData = data instanceof FormData;
       
+      if (isFormData) {
+        const file = data.get('image') as File;
+        if (file) {
+          console.log('📤 Uploading product with file:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+        }
+      }
+      
       const response = await fetch(`${API_BASE_URL}/products`, {
         method: 'POST',
         headers: isFormData ? {} : { 'Content-Type': 'application/json' },
@@ -68,6 +79,17 @@ export const api = {
     update: async (id: string, data: any): Promise<ApiResponse<Product>> => {
       // Check if data is FormData (for file upload)
       const isFormData = data instanceof FormData;
+      
+      if (isFormData) {
+        const file = data.get('image') as File;
+        if (file) {
+          console.log('📤 Updating product with file:', {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          });
+        }
+      }
       
       const response = await fetch(`${API_BASE_URL}/products/${id}`, {
         method: 'PUT',
