@@ -238,6 +238,12 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
 
   console.log('📝 Updating order status:', { orderId: id, status, mappedStatus: statusMap[status] });
 
+  // Get current order to check if status is changing to completed
+  const currentOrder = await prisma.order.findUnique({
+    where: { id },
+    include: { items: { include: { product: true } }, user: true },
+  });
+
   const order = await prisma.order.update({
     where: { id },
     data: { status: statusMap[status] as OrderStatus },
@@ -256,9 +262,58 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
     throw new Error('Order not found');
   }
 
+  // Award loyalty points when order is completed
+  if (statusMap[status] === 'COMPLETED' && currentOrder?.status !== 'COMPLETED') {
+    const pointsEarned = calculateLoyaltyPoints(order);
+    
+    if (pointsEarned > 0) {
+      // Update user points
+      await prisma.user.update({
+        where: { id: order.userId! },
+        data: { loyaltyPoints: { increment: pointsEarned } },
+      });
+
+      // Create points history
+      await prisma.pointsHistory.create({
+        data: {
+          userId: order.userId!,
+          points: pointsEarned,
+          type: 'earned',
+          description: `Order completed: ${order.customerName}`,
+          orderId: order.id,
+        },
+      });
+
+      console.log(`🎉 Awarded ${pointsEarned} points to user ${order.userId}`);
+    }
+  }
+
   console.log('✅ Order status updated:', { orderId: id, newStatus: order.status });
 
   return { data: mapOrder(order), success: true };
+}
+
+/**
+ * Calculate loyalty points for an order
+ * Rules:
+ * - 1 point per Rp 1,000 spent
+ * - 2x points for Coffee category
+ */
+function calculateLoyaltyPoints(order: any): number {
+  let totalPoints = 0;
+
+  order.items.forEach((item: any) => {
+    const basePoints = Math.floor(item.total / 1000);
+    const isCoffee = item.product.category === 'COFFEE';
+    
+    if (isCoffee) {
+      totalPoints += basePoints * 2; // 2x points for coffee
+    } else {
+      totalPoints += basePoints;
+    }
+  });
+
+  return totalPoints;
 }
 
 export async function login(email: string, password: string): Promise<{ data: any; success: boolean }> {

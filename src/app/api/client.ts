@@ -145,6 +145,11 @@ export const api = {
       return handleResponse<User>(response);
     },
 
+    getPointsHistory: async (): Promise<ApiResponse<any[]>> => {
+      const response = await fetch(`${API_BASE_URL}/user/points-history`);
+      return handleResponse<any[]>(response);
+    },
+
     updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
       const response = await fetch(`${API_BASE_URL}/user/profile`, {
         method: 'PUT',

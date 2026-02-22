@@ -17,16 +17,17 @@ enum Role {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  password       String   @default("") // Temporarily added with default for migration safety
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String        @default("") // Temporarily added with default for migration safety
   name           String?
   phone          String?
-  role           Role     @default(USER)
-  loyaltyPoints  Int      @default(0)
+  role           Role          @default(USER)
+  loyaltyPoints  Int           @default(0)
   orders         Order[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  pointsHistory  PointsHistory[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@map("users")
 }
@@ -99,4 +100,17 @@ model OrderItem {
   productId String
 
   @@map("order_items")
+}
+
+model PointsHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  points      Int
+  type        String   // 'earned' or 'redeemed'
+  description String
+  orderId     String?
+  createdAt   DateTime @default(now())
+
+  @@map("points_history")
 }

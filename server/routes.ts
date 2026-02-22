@@ -294,6 +294,22 @@ router.get('/user/profile', async (req, res) => {
   }
 });
 
+router.get('/user/points-history', async (req, res) => {
+  try {
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const history = await prisma.pointsHistory.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    
+    res.json({ success: true, data: history });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.put('/user/profile', async (req, res) => {
   try {
     const result = await updateUserProfile(req.body);
