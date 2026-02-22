@@ -168,6 +168,12 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
     const { name, description, basePrice, image, category, featured, sizes } = req.body;
 
+    console.log('📝 Update product request:', {
+      productId: req.params.id,
+      featured,
+      featuredType: typeof featured,
+    });
+
     // Handle file upload to Cloudinary if new file is uploaded
     let imageUrl = image;
     let cloudinaryPublicId: string | undefined;
@@ -189,9 +195,15 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
       description,
       basePrice: basePrice ? parseInt(basePrice) : undefined,
       category,
-      featured: featured !== undefined ? featured === 'true' : undefined,
+      // Handle both boolean and string 'true'/'false'
+      featured: featured !== undefined ? (featured === true || featured === 'true') : undefined,
       sizes: sizes ? JSON.parse(sizes) : undefined,
     };
+
+    console.log('📝 Update data:', {
+      ...updateData,
+      featured,
+    });
 
     // Only update image fields if new image is provided
     if (imageUrl) {
@@ -203,6 +215,7 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
     }
 
     const result = await updateProduct(req.params.id, updateData);
+    console.log('✅ Product updated:', result.data);
     res.json(result);
   } catch (error: any) {
     console.error('Update product error:', error);
