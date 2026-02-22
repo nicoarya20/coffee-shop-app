@@ -26,35 +26,20 @@ export function Login() {
         expectedRole: activeTab === 'admin' ? 'ADMIN' : 'USER'
       });
 
-      // Login and get user data
+      // Login and get user data (DO NOT refresh - login already returns correct data)
       await login(email, password);
 
-      // Refresh to get latest user data with role
-      if (refreshUser) {
-        await refreshUser();
-      }
-
-      // Get user from localStorage (already updated by refreshUser)
+      // Get user from localStorage (set by login function)
       const savedUser = localStorage.getItem('coffee_shop_user');
       const loggedInUser = savedUser ? JSON.parse(savedUser) : null;
 
       console.log('✅ Login successful:', {
         email: loggedInUser?.email,
         role: loggedInUser?.role,
-        roleInDB: loggedInUser?.role,
-        expectedRole: activeTab === 'admin' ? 'ADMIN' : 'USER',
-        mismatch: loggedInUser?.role?.toUpperCase() !== (activeTab === 'admin' ? 'ADMIN' : 'USER')
+        name: loggedInUser?.name,
       });
 
       toast.success(`Welcome, ${loggedInUser?.name || 'User'}!`);
-
-      // Show warning if role doesn't match selected tab
-      if (loggedInUser?.role?.toUpperCase() !== (activeTab === 'admin' ? 'ADMIN' : 'USER')) {
-        toast.warning(
-          `⚠️ Account role (${loggedInUser?.role}) doesn't match selected tab (${activeTab}). Redirecting based on actual role.`,
-          { duration: 5000 }
-        );
-      }
 
       // Redirect based on user role, not tab selection
       const from = (location.state as any)?.from?.pathname;

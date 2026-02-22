@@ -35,21 +35,34 @@ export function Profile() {
   const [loadingPoints, setLoadingPoints] = useState(false);
   const [lastPointsCount, setLastPointsCount] = useState(0);
 
+  // Debug log user data
+  useEffect(() => {
+    if (user) {
+      console.log('👤 Profile user data:', {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        loyaltyPoints: user.loyaltyPoints,
+      });
+    }
+  }, [user]);
+
   // Initial fetch
   useEffect(() => {
     fetchPointsHistory();
-    // Refresh user data on mount
-    if (refreshUser) {
+    // Refresh user data on mount (only if user is logged in)
+    if (user && refreshUser) {
       refreshUser();
     }
     
-    // Poll for points updates every 10 seconds (not 5 to reduce flickering)
+    // Poll for points updates every 10 seconds (silent refresh)
     const interval = setInterval(() => {
       fetchPointsHistory(true); // Silent refresh
     }, 10000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]); // Re-run if user changes
 
   // Check if points changed and show notification
   useEffect(() => {

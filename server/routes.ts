@@ -287,9 +287,23 @@ router.patch('/orders/:id/status', async (req, res) => {
 // User routes
 router.get('/user/profile', async (req, res) => {
   try {
-    const result = await getUserProfile();
+    const userId = req.query.userId as string;
+    
+    console.log('📝 Get user profile:', { 
+      userId, 
+      hasUserId: !!userId 
+    });
+    
+    const result = await getUserProfile(userId);
+    console.log('✅ Profile returned:', {
+      userId: result.data.id,
+      role: result.data.role,
+      email: result.data.email
+    });
+    
     res.json(result);
   } catch (error: any) {
+    console.error('❌ Get profile error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
