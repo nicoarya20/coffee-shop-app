@@ -1,7 +1,7 @@
 import { ApiResponse, ProductsQueryParams, CreateOrderInput, UpdateOrderStatusInput } from './types';
 import { Product, Order, User } from '../types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
