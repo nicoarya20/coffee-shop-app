@@ -200,11 +200,6 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
       sizes: sizes ? JSON.parse(sizes) : undefined,
     };
 
-    console.log('📝 Update data:', {
-      ...updateData,
-      featured,
-    });
-
     // Only update image fields if new image is provided
     if (imageUrl) {
       updateData.image = imageUrl;
