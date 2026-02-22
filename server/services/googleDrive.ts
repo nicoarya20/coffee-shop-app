@@ -3,10 +3,11 @@ import { Readable } from 'stream';
 
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-const GOOGLE_DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
+const GOOGLE_DRIVE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID?.split('?')[0]; // Remove query params
 
 if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY || !GOOGLE_DRIVE_FOLDER_ID) {
   console.warn('⚠️  Google Drive credentials not configured. File upload will not work.');
+  console.warn('📝 Please set GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_DRIVE_FOLDER_ID in .env');
 }
 
 // Initialize Google Drive API client
@@ -44,7 +45,7 @@ export async function uploadFile(
     if (!GOOGLE_DRIVE_FOLDER_ID) {
       return {
         success: false,
-        error: 'Google Drive folder ID not configured',
+        error: 'Google Drive folder ID not configured. Please set GOOGLE_DRIVE_FOLDER_ID in .env',
       };
     }
 
@@ -100,6 +101,22 @@ export async function uploadFile(
     };
   } catch (error: any) {
     console.error('Google Drive upload error:', error);
+    
+    // Handle specific error cases
+    if (error.code === 404) {
+      return {
+        success: false,
+        error: `Google Drive folder not found. Please check:\n1. Folder ID is correct: ${GOOGLE_DRIVE_FOLDER_ID}\n2. Folder is shared with service account: ${GOOGLE_CLIENT_EMAIL}\n3. Service account has Editor permission`,
+      };
+    }
+    
+    if (error.code === 403) {
+      return {
+        success: false,
+        error: 'Permission denied. Please ensure the Google Drive folder is shared with the service account email with Editor permission.',
+      };
+    }
+
     return {
       success: false,
       error: error.message || 'Failed to upload file to Google Drive',
