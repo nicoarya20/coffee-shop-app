@@ -1,7 +1,6 @@
 import { PrismaClient, OrderStatus, Role, Category as PrismaCategory } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { uploadFile as uploadToCloudinary } from './services/cloudinary.js';
-import { Express } from 'express';
 
 const prisma = new PrismaClient();
 
@@ -486,7 +485,12 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
  * Upload product image to Cloudinary
  * @param file - Multer file object
  */
-export async function uploadProductImage(file: Express.Multer.File): Promise<{
+export async function uploadProductImage(file: {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}): Promise<{
   success: boolean;
   imageUrl?: string;
   publicId?: string;

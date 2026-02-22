@@ -168,12 +168,6 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
     const { name, description, basePrice, image, category, featured, sizes } = req.body;
 
-    console.log('📝 Update product request:', {
-      productId: req.params.id,
-      featured,
-      featuredType: typeof featured,
-    });
-
     // Handle file upload to Cloudinary if new file is uploaded
     let imageUrl = image;
     let cloudinaryPublicId: string | undefined;
@@ -190,13 +184,18 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
       cloudinaryPublicId = uploadResult.publicId;
     }
 
+    // Convert featured to boolean (handle both string and boolean)
+    let featuredValue: boolean | undefined;
+    if (featured !== undefined) {
+      featuredValue = featured === true || featured === 'true';
+    }
+
     const updateData: any = {
       name,
       description,
       basePrice: basePrice ? parseInt(basePrice) : undefined,
       category,
-      // Handle both boolean and string 'true'/'false'
-      featured: featured !== undefined ? (featured === true || featured === 'true') : undefined,
+      featured: featuredValue,
       sizes: sizes ? JSON.parse(sizes) : undefined,
     };
 
