@@ -226,7 +226,7 @@ export async function createOrder(input: { items: any[]; customerName: string; n
   return { data: mapOrder(newOrder), success: true };
 }
 
-export async function updateOrderStatus(id: string, status: 'pending' | 'preparing' | 'ready' | 'completed'): Promise<{ data: any; success: boolean }> {
+export async function updateOrderStatus(id: string, status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'): Promise<{ data: any; success: boolean }> {
   await delay(300);
 
   const statusMap = {
@@ -234,7 +234,10 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
     'preparing': 'PREPARING',
     'ready': 'READY',
     'completed': 'COMPLETED',
+    'cancelled': 'CANCELLED',
   };
+
+  console.log('📝 Updating order status:', { orderId: id, status, mappedStatus: statusMap[status] });
 
   const order = await prisma.order.update({
     where: { id },
@@ -253,6 +256,8 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
   if (!order) {
     throw new Error('Order not found');
   }
+
+  console.log('✅ Order status updated:', { orderId: id, newStatus: order.status });
 
   return { data: mapOrder(order), success: true };
 }
