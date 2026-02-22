@@ -234,7 +234,7 @@ export function AdminProductsPage() {
                     const img = e.target as HTMLImageElement;
                     // Skip if already using placeholder
                     if (img.src.includes('placehold.co')) return;
-                    
+
                     console.error('❌ Failed to load image:', product.image);
                     img.src = 'https://placehold.co/400x300/f59e0b/ffffff?text=No+Image';
                   }}
@@ -246,10 +246,10 @@ export function AdminProductsPage() {
                   </span>
                 )}
               </div>
-              
+
               <h3 className="font-semibold text-gray-900 text-sm mb-1">{product.name}</h3>
               <p className="text-xs text-gray-500 mb-2 capitalize">{product.category}</p>
-              
+
               <div className="flex items-center justify-between mb-3">
                 <span className="text-amber-600 font-bold text-sm">{formatPrice(product.price)}</span>
                 {product.sizes && product.sizes.length > 0 && (
@@ -260,7 +260,10 @@ export function AdminProductsPage() {
               {/* Actions */}
               <div className="flex gap-1 border-t border-gray-100 pt-2">
                 <button
-                  onClick={() => handleToggleFeatured(product)}
+                  onClick={() => {
+                    console.log('🔘 Clicked feature for:', product.name, '- Current featured:', product.featured);
+                    handleToggleFeatured(product);
+                  }}
                   className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1 ${
                     product.featured
                       ? 'bg-gradient-to-r from-yellow-400 to-amber-400 text-white shadow-lg shadow-yellow-400/50 scale-105'
