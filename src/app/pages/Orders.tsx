@@ -1,10 +1,45 @@
 import { motion } from 'motion/react';
 import { Package, Clock, CheckCircle, ChefHat } from 'lucide-react';
-import { useOrders } from '../context/OrderContext';
+import { useState, useEffect, useRef } from 'react';
+import { api } from '../api/client';
+import { toast } from 'sonner';
 import { Order } from '../types';
 
 export function Orders() {
-  const { orders } = useOrders();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const previousOrdersRef = useRef<Order[]>([]);
+
+  const fetchOrders = async (isSilent = false) => {
+    try {
+      if (!isSilent) setLoading(true);
+      const response = await api.orders.getAll();
+      
+      // Check for status updates on existing orders
+      if (!isSilent && previousOrdersRef.current.length > 0) {
+        response.data.forEach(newOrder => {
+          const oldOrder = previousOrdersRef.current.find(o => o.id === newOrder.id);
+          if (oldOrder && oldOrder.status !== newOrder.status) {
+            toast.success(`📦 Order status updated: ${newOrder.status.toUpperCase()}`);
+          }
+        });
+      }
+
+      previousOrdersRef.current = response.data;
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    // Poll for order updates every 5 seconds
+    const interval = setInterval(() => fetchOrders(true), 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -56,6 +91,17 @@ export function Orders() {
         };
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (orders.length === 0) {
     return (

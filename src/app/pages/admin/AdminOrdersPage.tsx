@@ -1,10 +1,11 @@
 import { motion } from 'motion/react';
-import { 
-  Package, 
-  Clock, 
-  CheckCircle, 
+import {
+  Package,
+  Clock,
+  CheckCircle,
   ChefHat,
-  ArrowLeft
+  ArrowLeft,
+  DollarSign
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
@@ -96,6 +97,10 @@ export function AdminOrdersPage() {
     pending: orders.filter(o => o.status === 'pending').length,
     active: orders.filter(o => ['preparing', 'ready'].includes(o.status)).length,
     completed: orders.filter(o => o.status === 'completed').length,
+    // Revenue hanya dari completed orders
+    revenue: orders
+      .filter(o => o.status === 'completed')
+      .reduce((sum, o) => sum + o.total, 0),
   };
 
   if (loading) {
@@ -125,18 +130,20 @@ export function AdminOrdersPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <Clock className="w-4 h-4 text-amber-100" />
+                <p className="text-xs text-amber-100">Pending</p>
+              </div>
               <p className="text-2xl font-bold">{stats.pending}</p>
-              <p className="text-xs text-amber-100">Pending</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold">{stats.active}</p>
-              <p className="text-xs text-amber-100">Active</p>
-            </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 text-center">
-              <p className="text-2xl font-bold">{stats.completed}</p>
-              <p className="text-xs text-amber-100">Completed</p>
+              <div className="flex items-center justify-center gap-1 mb-1">
+                <DollarSign className="w-4 h-4 text-amber-100" />
+                <p className="text-xs text-amber-100">Revenue</p>
+              </div>
+              <p className="text-lg font-bold">{formatPrice(stats.revenue)}</p>
             </div>
           </div>
         </div>
