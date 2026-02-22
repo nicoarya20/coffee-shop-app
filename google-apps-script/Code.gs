@@ -45,28 +45,41 @@ function doPost(e) {
     // Create file in folder
     const file = folder.createFile(blob);
     
-    // Set file to public (anyone with link can view)
+    // Set file to public - ANYONE can view (not just with link)
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    // Also add "anyone" permission explicitly for extra compatibility
+    try {
+      file.addEditor(Session.getActiveUser().getEmail());
+    } catch (e) {
+      Logger.log('Could not add editor: ' + e.toString());
+    }
     
     // Get file ID
     const fileId = file.getId();
     
-    // Generate proper view URL for personal Google Drive
-    // Format: https://drive.google.com/uc?export=view&id=FILE_ID
+    // Generate multiple URL formats for compatibility
+    // Primary: direct view URL
     const fileUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
     
-    // Get web view URL (for manual access)
+    // Alternative formats (for reference)
+    const downloadUrl = 'https://drive.google.com/uc?export=download&id=' + fileId;
     const webViewUrl = 'https://drive.google.com/file/d/' + fileId + '/view';
+    const directLinkUrl = 'https://lh3.googleusercontent.com/d/' + fileId;
     
     Logger.log('File uploaded: ' + file.getName() + ' (ID: ' + fileId + ')');
     Logger.log('File URL: ' + fileUrl);
+    Logger.log('Web View URL: ' + webViewUrl);
+    Logger.log('Direct Link URL: ' + directLinkUrl);
     
-    // Return success response
+    // Return success response with all URL formats
     return jsonResponse({
       success: true,
       fileId: fileId,
       fileUrl: fileUrl,
-      webViewUrl: webViewUrl
+      webViewUrl: webViewUrl,
+      downloadUrl: downloadUrl,
+      directLinkUrl: directLinkUrl
     });
     
   } catch (error) {

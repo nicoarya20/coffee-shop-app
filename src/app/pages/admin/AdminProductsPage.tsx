@@ -222,9 +222,34 @@ export function AdminProductsPage() {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-32 rounded-lg object-cover"
+                  crossOrigin="anonymous"
                   onError={(e) => {
-                    console.error('❌ Failed to load image:', product.image);
-                    (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/f59e0b/ffffff?text=No+Image';
+                    const img = e.target as HTMLImageElement;
+                    const currentSrc = img.src;
+                    
+                    // Try alternative Google Drive URL formats
+                    if (currentSrc.includes('drive.google.com')) {
+                      const fileId = currentSrc.match(/id=([^&]+)/)?.[1];
+                      
+                      if (fileId) {
+                        // Try different URL formats
+                        if (!currentSrc.includes('export=download')) {
+                          // First retry: try download format
+                          console.log('🔄 Retry with download format:', fileId);
+                          img.src = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                          return;
+                        } else if (!currentSrc.includes('uc?')) {
+                          // Second retry: try direct view format
+                          console.log('🔄 Retry with view format:', fileId);
+                          img.src = `https://drive.google.com/uc?id=${fileId}&export=view`;
+                          return;
+                        }
+                      }
+                    }
+                    
+                    // Final fallback: placeholder
+                    console.error('❌ Failed to load image after retries:', product.image);
+                    img.src = 'https://placehold.co/400x300/f59e0b/ffffff?text=No+Image';
                   }}
                 />
                 {product.featured && (

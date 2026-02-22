@@ -72,10 +72,14 @@ export async function uploadFile(
       };
     }
 
+    // Prefer directLinkUrl for better compatibility (lh3.googleusercontent.com)
+    // Fallback to fileUrl if not available
+    const imageUrl = result.directLinkUrl || result.fileUrl;
+
     return {
       success: true,
       fileId: result.fileId,
-      fileUrl: result.fileUrl,
+      fileUrl: imageUrl,
       webViewUrl: result.webViewUrl,
     };
   } catch (error: any) {
