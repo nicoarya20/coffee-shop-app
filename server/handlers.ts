@@ -331,16 +331,38 @@ export async function updateOrderStatus(id: string, status: 'pending' | 'prepari
 function calculateLoyaltyPoints(order: any): number {
   let totalPoints = 0;
 
+  console.log('🧮 Calculating points for order:', {
+    orderId: order.id,
+    itemCount: order.items.length,
+    items: order.items.map((item: any) => ({
+      name: item.product.name,
+      category: item.product.category,
+      total: item.total,
+    }))
+  });
+
   order.items.forEach((item: any) => {
     const basePoints = Math.floor(item.total / 1000);
     const isCoffee = item.product.category === 'COFFEE';
-    
+    const pointsForItem = isCoffee ? basePoints * 2 : basePoints;
+
+    console.log('  📦 Item:', {
+      name: item.product.name,
+      category: item.product.category,
+      isCoffee,
+      total: item.total,
+      basePoints,
+      pointsForItem
+    });
+
     if (isCoffee) {
       totalPoints += basePoints * 2; // 2x points for coffee
     } else {
       totalPoints += basePoints;
     }
   });
+
+  console.log('🎯 Total points calculated:', totalPoints);
 
   return totalPoints;
 }

@@ -247,19 +247,39 @@ router.get('/orders/:id', async (req, res) => {
 
 router.post('/orders', async (req, res) => {
   try {
-    const { items, customerName, notes } = req.body;
-    
+    const { items, customerName, notes, userId } = req.body;
+
+    console.log('📝 Create order request:', {
+      customerName,
+      userId,
+      itemCount: items?.length,
+      hasUserId: !!userId
+    });
+
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Order items are required' });
     }
-    
+
     if (!customerName) {
       return res.status(400).json({ success: false, message: 'Customer name is required' });
     }
 
-    const result = await createOrder({ items, customerName, notes });
+    const result = await createOrder({ 
+      items, 
+      customerName, 
+      notes,
+      userId  // ✅ FORWARD userId!
+    });
+    
+    console.log('✅ Order created:', {
+      orderId: result.data.id,
+      userId: result.data.userId,
+      hasUserId: !!result.data.userId
+    });
+    
     res.status(201).json(result);
   } catch (error: any) {
+    console.error('❌ Create order error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
