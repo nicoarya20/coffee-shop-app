@@ -310,16 +310,38 @@ router.get('/user/profile', async (req, res) => {
 
 router.get('/user/points-history', async (req, res) => {
   try {
+    const userId = req.query.userId as string;
+    
+    console.log('📊 Get points history:', { 
+      userId, 
+      hasUserId: !!userId 
+    });
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'userId is required' 
+      });
+    }
+    
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
-    
+
     const history = await prisma.pointsHistory.findMany({
+      where: { userId },  // ✅ FILTER BY USER ID!
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-    
+
+    console.log('✅ Points history returned:', {
+      userId,
+      count: history.length,
+      totalPoints: history.reduce((sum, h) => sum + h.points, 0)
+    });
+
     res.json({ success: true, data: history });
   } catch (error: any) {
+    console.error('❌ Get points history error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

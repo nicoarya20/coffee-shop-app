@@ -82,10 +82,19 @@ export function Profile() {
       setLoadingPoints(true);
     }
     try {
-      const response = await api.user.getPointsHistory();
+      if (!user?.id) {
+        console.warn('⚠️ No userId, cannot fetch points history');
+        return;
+      }
+      
+      const response = await api.user.getPointsHistory(user.id);
       setPointsHistory(response.data);
       if (!silent) {
-        console.log('📊 Points history loaded:', response.data.length, 'entries');
+        console.log('📊 Points history loaded:', {
+          userId: user.id,
+          count: response.data.length,
+          entries: response.data.length
+        });
       }
     } catch (error) {
       console.error('Failed to fetch points history:', error);

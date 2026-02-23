@@ -146,8 +146,9 @@ export const api = {
       return handleResponse<User>(response);
     },
 
-    getPointsHistory: async (): Promise<ApiResponse<any[]>> => {
-      const response = await fetch(`${API_BASE_URL}/user/points-history`);
+    getPointsHistory: async (userId?: string): Promise<ApiResponse<any[]>> => {
+      const searchParams = userId ? `?userId=${userId}` : '';
+      const response = await fetch(`${API_BASE_URL}/user/points-history${searchParams}`);
       return handleResponse<any[]>(response);
     },
 
