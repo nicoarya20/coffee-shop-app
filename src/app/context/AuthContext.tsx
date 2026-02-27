@@ -22,7 +22,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for saved user in localStorage on mount
     const savedUser = localStorage.getItem('coffee_shop_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        
+        // Validate user session by refreshing data
+        // This will auto-logout if user no longer exists in database
+        refreshUser();
+      } catch (error) {
+        console.error('Invalid user data in localStorage, clearing...');
+        localStorage.removeItem('coffee_shop_user');
+      }
     }
     setLoading(false);
   }, []);
@@ -32,12 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Get userId from localStorage
       const savedUser = localStorage.getItem('coffee_shop_user');
       const userId = savedUser ? JSON.parse(savedUser).id : null;
-      
+
       if (!userId) {
         console.warn('⚠️ No userId found, cannot refresh');
         return;
       }
-      
+
       const response = await api.user.getProfile(userId);
       if (response.success) {
         setUser(response.data);
@@ -48,9 +58,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: response.data.role,
           loyaltyPoints: response.data.loyaltyPoints
         });
+      } else {
+        // User not found in database - auto logout
+        console.warn('⚠️ User session invalid, auto-logout');
+        logout();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to refresh user:', error);
+      
+      // Auto-logout on 404 (user not found) or 401 (unauthorized)
+      if (error.status === 404 || error.status === 401) {
+        console.warn('⚠️ Session expired or user not found, auto-logout');
+        logout();
+      }
     }
   };
 

@@ -1,28 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ChevronLeft, Minus, Plus, ShoppingCart } from 'lucide-react';
-import { products } from '../data/products';
+import { ChevronLeft, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { api } from '../api/client';
+import { Product } from '../types';
+import { toast } from 'sonner';
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  const product = products.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(
-    product?.sizes?.[0]?.name || ''
-  );
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
-  if (!product) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <p className="text-gray-500">Product not found</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (id) {
+      fetchProduct(id);
+    }
+  }, [id]);
+
+  const fetchProduct = async (productId: string) => {
+    try {
+      setLoading(true);
+      const response = await api.products.getById(productId);
+      if (response.success) {
+        setProduct(response.data);
+        // Set default size if available
+        if (response.data.sizes && response.data.sizes.length > 0) {
+          setSelectedSize(response.data.sizes[0].name);
+        }
+      } else {
+        toast.error('Product not found');
+        navigate('/menu');
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch product:', error);
+      toast.error(error.status === 404 ? 'Product not found' : 'Failed to load product');
+      navigate('/menu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -32,16 +54,47 @@ export function ProductDetail() {
     }).format(price);
   };
 
-  const currentPrice = selectedSize
-    ? product.sizes?.find((s) => s.name === selectedSize)?.price || product.price
-    : product.price;
+  const currentPrice = product
+    ? selectedSize && product.sizes
+      ? product.sizes.find((s) => s.name === selectedSize)?.price || product.price
+      : product.price
+    : 0;
 
   const totalPrice = currentPrice * quantity;
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedSize || undefined);
-    navigate('/cart');
+    if (product) {
+      addToCart(product, quantity, selectedSize || undefined);
+      navigate('/cart');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Product not found</p>
+          <button
+            onClick={() => navigate('/menu')}
+            className="text-amber-600 font-medium hover:underline"
+          >
+            Back to Menu
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -52,7 +105,7 @@ export function ProductDetail() {
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-gray-100 rounded-full active:scale-95 transition-transform"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-lg font-semibold">Product Detail</h1>
         </div>
@@ -69,6 +122,10 @@ export function ProductDetail() {
             src={product.image}
             alt={product.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.src = 'https://placehold.co/400x400/f59e0b/ffffff?text=No+Image';
+            }}
           />
           {product.featured && (
             <div className="absolute top-4 left-4 bg-amber-500 text-white text-sm font-semibold px-3 py-1 rounded-full">

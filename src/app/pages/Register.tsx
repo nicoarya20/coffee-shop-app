@@ -12,25 +12,71 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // Client-side validation
+    if (!name.trim()) {
+      toast.error('Full name is required');
+      return;
+    }
+
+    if (!email.trim()) {
+      toast.error('Email is required');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (!password) {
+      toast.error('Password is required');
+      return;
+    }
+
+    // Password strength validation (min 6 characters)
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
     if (password !== confirmPassword) {
-      return toast.error('Passwords do not match');
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      toast.error('You must accept the Terms & Conditions');
+      return;
     }
 
     setIsLoading(true);
 
     try {
       await register({ name, email, phone, password, role: 'USER' });
-      toast.success('Account created successfully!');
+      toast.success('Account created successfully! Welcome to Coffee Shop! 🎉');
       navigate('/', { replace: true });
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed. Please try again.');
+      console.error('Registration failed:', error);
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message?.includes('already exists') || error.message?.includes('unique')) {
+        errorMessage = 'Email already registered. Please login or use a different email.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +208,42 @@ export function Register() {
                   placeholder="••••••••"
                 />
               </div>
+            </div>
+
+            {/* Password Strength Indicator */}
+            {password && (
+              <div className="px-1">
+                <div className="flex gap-1 mb-1">
+                  <div className={`flex-1 h-1 rounded ${password.length >= 6 ? 'bg-green-500' : 'bg-gray-200'}`} />
+                  <div className={`flex-1 h-1 rounded ${password.length >= 8 ? 'bg-green-500' : 'bg-gray-200'}`} />
+                  <div className={`flex-1 h-1 rounded ${password.length >= 12 ? 'bg-green-500' : 'bg-gray-200'}`} />
+                </div>
+                <p className="text-xs text-gray-500">
+                  Password strength: {password.length < 6 ? 'Weak' : password.length < 10 ? 'Medium' : 'Strong'}
+                </p>
+              </div>
+            )}
+
+            {/* Terms & Conditions Checkbox */}
+            <div className="flex items-start gap-2">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-600">
+                I agree to the{' '}
+                <a href="/terms" className="text-amber-600 hover:underline font-medium">
+                  Terms & Conditions
+                </a>{' '}
+                and{' '}
+                <a href="/privacy" className="text-amber-600 hover:underline font-medium">
+                  Privacy Policy
+                </a>
+              </label>
             </div>
 
             <div className="pt-2">
