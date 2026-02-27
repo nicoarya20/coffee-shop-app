@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ChevronLeft, CreditCard, Wallet } from 'lucide-react';
+import { ChevronLeft, CreditCard, Wallet, Gift, TrendingUp, Coffee } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
@@ -24,6 +24,23 @@ export function Checkout() {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  // Calculate loyalty points
+  const calculatePoints = () => {
+    if (!user?.id) return 0;
+    
+    let points = 0;
+    items.forEach(item => {
+      const basePoints = Math.floor(item.total / 1000);
+      const isCoffee = item.product.category === 'coffee';
+      points += isCoffee ? basePoints * 2 : basePoints;
+    });
+    
+    return points;
+  };
+
+  const pointsEarned = calculatePoints();
+  const hasCoffeeItems = items.some(item => item.product.category === 'coffee');
 
   const handlePlaceOrder = async () => {
     if (!customerName.trim()) {
@@ -60,7 +77,7 @@ export function Checkout() {
         customerName,
         total,
         itemCount: items.length,
-        willEarnPoints: user?.id ? Math.floor(total / 1000) : 0,
+        willEarnPoints: pointsEarned,
       });
 
       // Call API to create order with userId
@@ -69,11 +86,13 @@ export function Checkout() {
       // Clear cart and show success
       clearCart();
       setIsProcessing(false);
-      
-      const pointsMessage = user?.id 
-        ? `You will earn ~${Math.floor(total / 1000)} points when completed!`
-        : 'Login to earn loyalty points next time!';
-      
+
+      const pointsMessage = user?.id && pointsEarned > 0
+        ? `You will earn ${pointsEarned} points when order is completed!`
+        : user?.id
+          ? 'No points for this order.'
+          : 'Login to earn loyalty points next time!';
+
       toast.success(`Order placed! ${pointsMessage}`);
       navigate('/orders');
     } catch (error: any) {
@@ -213,10 +232,46 @@ export function Checkout() {
               </div>
             ))}
             <div className="border-t border-gray-200 pt-3 mt-3">
-              <div className="flex justify-between text-lg font-bold">
+              <div className="flex justify-between text-lg font-bold mb-3">
                 <span>Total</span>
                 <span className="text-amber-600">{formatPrice(total)}</span>
               </div>
+              
+              {/* Loyalty Points Info */}
+              {user?.id && pointsEarned > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Gift className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-semibold text-amber-800">
+                      You'll earn {pointsEarned} points!
+                    </span>
+                  </div>
+                  <div className="text-xs text-amber-700 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>1 point for every Rp 1,000</span>
+                    </div>
+                    {hasCoffeeItems && (
+                      <div className="flex items-center gap-2">
+                        <Coffee className="w-3 h-3" />
+                        <span>☕ 2x points for coffee items!</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+              
+              {!user?.id && (
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 mt-3">
+                  <p className="text-xs text-blue-800 font-medium">
+                    💡 Login to earn loyalty points from this order!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

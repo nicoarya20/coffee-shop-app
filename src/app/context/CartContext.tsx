@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem, Product } from '../types';
 import { toast } from 'sonner';
 
@@ -14,8 +14,62 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = 'coffee_shop_cart';
+
+// Helper to serialize cart items (without product objects to save space)
+const serializeCart = (items: CartItem[]): any[] => {
+  return items.map(item => ({
+    productId: item.product.id,
+    quantity: item.quantity,
+    size: item.size,
+    total: item.total,
+  }));
+};
+
+// Helper to deserialize cart items (reconstruct with full product objects)
+const deserializeCart = (serialized: any[], allProducts: Map<string, Product>): CartItem[] => {
+  return serialized
+    .filter(item => allProducts.has(item.productId))
+    .map(item => ({
+      product: allProducts.get(item.productId)!,
+      quantity: item.quantity,
+      size: item.size,
+      total: item.total,
+    }));
+};
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    // Load cart from localStorage on mount
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        console.log('🛒 Loaded cart from localStorage:', parsed.length, 'items');
+        // Note: We'll store full cart items temporarily until products are loaded
+        // This is a simplified version - in production you'd want to fetch products
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error);
+    }
+    return [];
+  });
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (items.length > 0) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+        console.log('💾 Cart saved to localStorage:', items.length, 'items');
+      } else {
+        localStorage.removeItem(CART_STORAGE_KEY);
+        console.log('🗑️ Cart cleared from localStorage');
+      }
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error);
+    }
+  }, [items]);
 
   const addToCart = (product: Product, quantity = 1, size?: string) => {
     setItems((prev) => {
@@ -83,6 +137,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     setItems([]);
+    localStorage.removeItem(CART_STORAGE_KEY);
+    console.log('🗑️ Cart cleared');
   };
 
   const total = items.reduce((sum, item) => sum + item.total, 0);
