@@ -109,8 +109,19 @@ export const api = {
 
   // Orders API
   orders: {
-    getAll: async (): Promise<ApiResponse<Order[]>> => {
-      const response = await fetch(`${API_BASE_URL}/orders`);
+    getAll: async (params?: { userId?: string; status?: string }): Promise<ApiResponse<Order[]>> => {
+      const searchParams = new URLSearchParams();
+      if (params?.userId) searchParams.set('userId', params.userId);
+      if (params?.status) searchParams.set('status', params.status);
+      
+      const queryString = searchParams.toString();
+      const url = queryString 
+        ? `${API_BASE_URL}/orders?${queryString}`
+        : `${API_BASE_URL}/orders`;
+      
+      console.log('📡 Fetching orders from:', url);
+      
+      const response = await fetch(url);
       return handleResponse<Order[]>(response);
     },
 

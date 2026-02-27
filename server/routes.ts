@@ -229,7 +229,14 @@ router.delete('/products/:id', async (req, res) => {
 // Orders routes
 router.get('/orders', async (req, res) => {
   try {
-    const result = await getOrders();
+    const { userId, status } = req.query;
+    
+    console.log('📊 Get orders:', {
+      userId: userId || 'all',
+      status: status || 'all'
+    });
+    
+    const result = await getOrders(userId as string, status as string);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

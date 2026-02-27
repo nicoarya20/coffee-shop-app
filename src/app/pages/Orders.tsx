@@ -4,8 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../api/client';
 import { toast } from 'sonner';
 import { Order } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router';
 
 export function Orders() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const previousOrdersRef = useRef<Order[]>([]);
@@ -13,7 +18,20 @@ export function Orders() {
   const fetchOrders = async (isSilent = false) => {
     try {
       if (!isSilent) setLoading(true);
-      const response = await api.orders.getAll();
+      
+      // If user is logged in, fetch only their orders
+      // If not logged in, show empty state
+      if (!user?.id) {
+        console.log('⚠️ No user logged in, showing empty orders');
+        setOrders([]);
+        return;
+      }
+      
+      const response = await api.orders.getAll({ userId: user.id });
+      console.log('📦 Fetched orders for user:', {
+        userId: user.id,
+        count: response.data.length
+      });
 
       // Check for status updates on existing orders
       if (!isSilent && previousOrdersRef.current.length > 0) {
@@ -29,17 +47,24 @@ export function Orders() {
       setOrders(response.data);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
+      toast.error('Failed to load orders');
     } finally {
       if (!isSilent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
-    // Poll for order updates every 5 seconds
-    const interval = setInterval(() => fetchOrders(true), 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (user?.id) {
+      fetchOrders();
+      // Poll for order updates every 5 seconds
+      const interval = setInterval(() => fetchOrders(true), 5000);
+      return () => clearInterval(interval);
+    } else {
+      // User not logged in, clear orders
+      setOrders([]);
+      setLoading(false);
+    }
+  }, [user?.id]); // Re-fetch when user changes
 
   // Generate ticket number from order ID and timestamp
   const generateTicketNumber = (order: Order) => {
@@ -135,8 +160,30 @@ export function Orders() {
           <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Package className="w-16 h-16 text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No orders yet</h2>
-          <p className="text-gray-500">Your order history will appear here</p>
+          
+          {user ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">No orders yet</h2>
+              <p className="text-gray-500 mb-6">Your order history will appear here</p>
+              <button
+                onClick={() => navigate('/menu')}
+                className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-6 py-3 font-semibold active:scale-95 transition-transform"
+              >
+                Browse Menu
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Please login to view orders</h2>
+              <p className="text-gray-500 mb-6">Login to see your order history and track current orders</p>
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-6 py-3 font-semibold active:scale-95 transition-transform"
+              >
+                Login
+              </button>
+            </>
+          )}
         </motion.div>
       </div>
     );

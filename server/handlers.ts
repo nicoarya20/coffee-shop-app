@@ -147,10 +147,25 @@ export async function searchProducts(query: string): Promise<{ data: Product[]; 
   return getProducts(undefined, undefined, query);
 }
 
-export async function getOrders(): Promise<{ data: any[]; success: boolean }> {
+export async function getOrders(userId?: string, status?: string): Promise<{ data: any[]; success: boolean }> {
   await delay(300);
-  
+
+  const where: any = {};
+
+  // Filter by userId if provided
+  if (userId) {
+    where.userId = userId;
+    console.log('🔍 Filtering orders by userId:', userId);
+  }
+
+  // Filter by status if provided
+  if (status) {
+    where.status = status.toUpperCase();
+    console.log('🔍 Filtering orders by status:', status);
+  }
+
   const orders = await prisma.order.findMany({
+    where,
     include: {
       items: {
         include: {
@@ -164,6 +179,7 @@ export async function getOrders(): Promise<{ data: any[]; success: boolean }> {
     orderBy: { createdAt: 'desc' },
   });
 
+  console.log(`✅ Found ${orders.length} orders`);
   return { data: orders.map(mapOrder), success: true };
 }
 
