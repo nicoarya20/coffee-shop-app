@@ -7,10 +7,12 @@ const getApiBaseUrl = (): string => {
   // Check if running on network (not localhost)
   const isNetworkAccess = !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/);
 
-  const viteEnv = import.meta.env as unknown as { VITE_API_URL?: string };
+  // For Vercel/production, check if VITE_API_URL is defined
+  // @ts-ignore - Vite injects import.meta.env at build time
+  const viteApiUrl = import.meta.env?.VITE_API_URL;
 
-  if (viteEnv.VITE_API_URL) {
-    return viteEnv.VITE_API_URL;
+  if (viteApiUrl) {
+    return viteApiUrl;
   }
 
   // For network access without env var, use direct IP
