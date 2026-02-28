@@ -141,7 +141,7 @@ export function Login() {
           </div>
 
           {/* Info Box */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+          {/* <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
             <p className="text-xs text-blue-800 font-medium mb-2">📝 Demo Credentials:</p>
             <div className="text-xs text-blue-700 space-y-1">
               <div className="flex justify-between items-center">
@@ -156,7 +156,7 @@ export function Login() {
             <p className="text-xs text-blue-600 mt-3">
               ℹ️ Login will redirect based on your account role in database, not the selected tab.
             </p>
-          </div>
+          </div> */}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
