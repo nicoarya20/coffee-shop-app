@@ -1,23 +1,27 @@
-import { ApiResponse, ProductsQueryParams, CreateOrderInput, UpdateOrderStatusInput } from './types';
-import { Product, Order, User } from '../types';
+import type { ApiResponse, ProductsQueryParams, CreateOrderInput, UpdateOrderStatusInput } from './types';
+import type { Product, Order, User } from '../types';
 
 // API Base URL configuration
 // Priority: 1) VITE_API_URL env var, 2) /api proxy (for localhost), 3) direct IP fallback
-const getApiBaseUrl = () => {
+const getApiBaseUrl = (): string => {
   // Check if running on network (not localhost)
   const isNetworkAccess = !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/);
-  
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+
+  // For Vercel/production, check if VITE_API_URL is defined
+  // @ts-ignore - Vite injects import.meta.env at build time
+  const viteApiUrl = import.meta.env?.VITE_API_URL;
+
+  if (viteApiUrl) {
+    return viteApiUrl;
   }
-  
+
   // For network access without env var, use direct IP
   if (isNetworkAccess) {
     // Get the server IP from current hostname
     const serverIp = window.location.hostname;
     return `http://${serverIp}:3001/api`;
   }
-  
+
   // For localhost development, use proxy
   return '/api';
 };
