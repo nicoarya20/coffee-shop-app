@@ -8,7 +8,10 @@ import {
   DollarSign,
   ArrowRight,
   ChefHat,
-  CheckCircle
+  CheckCircle,
+  BarChart3,
+  Trophy,
+  Calendar
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
@@ -80,11 +83,115 @@ export function AdminDashboard() {
     pendingOrders: orders.filter(o => o.status === 'pending').length,
     activeOrders: orders.filter(o => ['preparing', 'ready'].includes(o.status)).length,
     completedOrders: orders.filter(o => o.status === 'completed').length,
+    cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
     totalRevenue: orders
       .filter(o => o.status === 'completed')
       .reduce((sum, o) => sum + o.total, 0),
     totalProducts: products.length,
   };
+
+  // Best selling products analysis
+  const bestSellingProducts = (() => {
+    const productSales: Record<string, { name: string; image: string; category: string; quantity: number; revenue: number }> = {};
+    
+    orders
+      .filter(o => o.status === 'completed')
+      .forEach(order => {
+        order.items.forEach(item => {
+          if (!productSales[item.product.id]) {
+            productSales[item.product.id] = {
+              name: item.product.name,
+              image: item.product.image,
+              category: item.product.category,
+              quantity: 0,
+              revenue: 0,
+            };
+          }
+          productSales[item.product.id].quantity += item.quantity;
+          productSales[item.product.id].revenue += item.total;
+        });
+      });
+    
+    return Object.values(productSales)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+  })();
+
+  // Daily revenue (last 7 days)
+  const dailyRevenue = (() => {
+    const days: Record<string, { date: Date; revenue: number; orders: number }> = {};
+    const today = new Date();
+    
+    // Initialize last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const key = date.toISOString().split('T')[0];
+      days[key] = { date, revenue: 0, orders: 0 };
+    }
+    
+    // Aggregate completed orders
+    orders
+      .filter(o => o.status === 'completed')
+      .forEach(order => {
+        const orderDate = new Date(order.timestamp);
+        const key = orderDate.toISOString().split('T')[0];
+        if (days[key]) {
+          days[key].revenue += order.total;
+          days[key].orders += 1;
+        }
+      });
+    
+    return Object.values(days);
+  })();
+
+  // Peak hours analysis
+  const peakHours = (() => {
+    const hours: Record<number, { hour: number; orders: number; revenue: number }> = {};
+    
+    // Initialize all hours
+    for (let i = 0; i < 24; i++) {
+      hours[i] = { hour: i, orders: 0, revenue: 0 };
+    }
+    
+    // Aggregate completed orders by hour
+    orders
+      .filter(o => o.status === 'completed')
+      .forEach(order => {
+        const orderDate = new Date(order.timestamp);
+        const hour = orderDate.getHours();
+        hours[hour].orders += 1;
+        hours[hour].revenue += order.total;
+      });
+    
+    // Get top 3 peak hours
+    return Object.values(hours)
+      .sort((a, b) => b.orders - a.orders)
+      .slice(0, 3);
+  })();
+
+  // Category breakdown
+  const categoryBreakdown = (() => {
+    const categories: Record<string, { name: string; orders: number; revenue: number }> = {
+      coffee: { name: 'Coffee', orders: 0, revenue: 0 },
+      tea: { name: 'Tea', orders: 0, revenue: 0 },
+      snacks: { name: 'Snacks', orders: 0, revenue: 0 },
+    };
+    
+    orders
+      .filter(o => o.status === 'completed')
+      .forEach(order => {
+        order.items.forEach(item => {
+          const category = item.product.category;
+          if (categories[category]) {
+            categories[category].orders += item.quantity;
+            categories[category].revenue += item.total;
+          }
+        });
+      });
+    
+    return Object.values(categories);
+  })();
 
   const pendingOrderCount = orders.filter(o => o.status === 'pending').length;
   const recentOrders = orders.slice(0, 5);
@@ -245,7 +352,7 @@ export function AdminDashboard() {
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           {recentOrders.length > 0 ? (
             <div className="space-y-3">
               {recentOrders.map((order) => {
@@ -276,6 +383,139 @@ export function AdminDashboard() {
             </div>
           )}
         </div>
+
+        {/* Daily Revenue Chart */}
+        {dailyRevenue.some(d => d.revenue > 0) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-amber-600" />
+              <h2 className="font-bold text-gray-900">Daily Revenue (Last 7 Days)</h2>
+            </div>
+            <div className="flex items-end justify-between gap-2 h-32">
+              {dailyRevenue.map((day, idx) => {
+                const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue));
+                const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                const dayName = day.date.toLocaleDateString('id-ID', { weekday: 'short' });
+                
+                return (
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                    <div className="w-full relative flex items-end justify-center" style={{ height: '100px' }}>
+                      {day.revenue > 0 && (
+                        <div
+                          className="w-full max-w-[24px] bg-amber-500 rounded-t-md transition-all duration-300"
+                          style={{ height: `${height}%` }}
+                        />
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-500">{dayName}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Peak Hours */}
+        {peakHours.some(h => h.orders > 0) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="w-5 h-5 text-amber-600" />
+              <h2 className="font-bold text-gray-900">Peak Hours</h2>
+            </div>
+            <div className="space-y-3">
+              {peakHours.map((peak, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-bold text-amber-600">#{idx + 1}</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-gray-900">
+                        {peak.hour.toString().padStart(2, '0')}:00 - {(peak.hour + 1).toString().padStart(2, '0')}:00
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {peak.orders} orders · {formatPrice(peak.revenue)}
+                      </p>
+                    </div>
+                    <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-500 rounded-full"
+                        style={{ width: `${(peak.orders / peakHours[0].orders) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Best Selling Products */}
+        {bestSellingProducts.length > 0 && (
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="w-5 h-5 text-amber-600" />
+              <h2 className="font-bold text-gray-900">Best Selling Products</h2>
+            </div>
+            <div className="space-y-3">
+              {bestSellingProducts.map((product, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-12 h-12 rounded-lg object-cover"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{product.name}</p>
+                    <p className="text-xs text-gray-500 capitalize">{product.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-amber-600">{product.quantity} sold</p>
+                    <p className="text-xs text-gray-500">{formatPrice(product.revenue)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Category Breakdown */}
+        {categoryBreakdown.some(c => c.revenue > 0) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Coffee className="w-5 h-5 text-amber-600" />
+              <h2 className="font-bold text-gray-900">Category Breakdown</h2>
+            </div>
+            <div className="space-y-3">
+              {categoryBreakdown.map((category, idx) => {
+                const totalRevenue = stats.totalRevenue;
+                const percentage = totalRevenue > 0 ? (category.revenue / totalRevenue) * 100 : 0;
+                const colors = {
+                  coffee: 'bg-amber-500',
+                  tea: 'bg-green-500',
+                  snacks: 'bg-blue-500',
+                };
+                
+                return (
+                  <div key={idx}>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-medium text-gray-700">{category.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {category.orders} orders · {formatPrice(category.revenue)} ({percentage.toFixed(1)}%)
+                      </p>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${colors[category.name as keyof typeof colors]} rounded-full transition-all duration-300`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-3">

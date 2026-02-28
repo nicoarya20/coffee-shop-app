@@ -5,7 +5,10 @@ import {
   CheckCircle,
   ChefHat,
   ArrowLeft,
-  DollarSign
+  DollarSign,
+  Search,
+  Calendar,
+  Filter
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
@@ -26,6 +29,12 @@ export function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'active' | 'completed'>('all');
+  
+  // Advanced filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerNameFilter, setCustomerNameFilter] = useState('');
+  const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const fetchOrders = async (isSilent = false) => {
     try {
@@ -99,10 +108,45 @@ export function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter(order => {
+    // Status filter
     if (orderFilter === 'pending') return order.status === 'pending';
     if (orderFilter === 'active') return ['preparing', 'ready'].includes(order.status);
     if (orderFilter === 'completed') return order.status === 'completed';
     if (orderFilter === 'cancelled') return order.status === 'cancelled';
+    
+    // Search by order ID or ticket number
+    if (searchQuery) {
+      const ticketNumber = generateTicketNumber(order).toLowerCase();
+      const orderId = order.id.toLowerCase();
+      if (!ticketNumber.includes(searchQuery.toLowerCase()) && !orderId.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Filter by customer name
+    if (customerNameFilter) {
+      if (!order.customerName.toLowerCase().includes(customerNameFilter.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Date range filter
+    if (dateRangeFilter !== 'all') {
+      const orderDate = new Date(order.timestamp);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (dateRangeFilter === 'today') {
+        if (orderDate < today) return false;
+      } else if (dateRangeFilter === 'week') {
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (orderDate < weekAgo) return false;
+      } else if (dateRangeFilter === 'month') {
+        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (orderDate < monthAgo) return false;
+      }
+    }
+    
     return true;
   });
 
@@ -165,6 +209,100 @@ export function AdminOrdersPage() {
 
       {/* Content */}
       <div className="max-w-md mx-auto px-4 mt-4 space-y-4">
+        {/* Search and Filter Toggle */}
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by order ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-lg transition-colors ${
+              showFilters || customerNameFilter || dateRangeFilter !== 'all'
+                ? 'bg-amber-500 text-white'
+                : 'bg-white text-gray-600 border border-gray-200'
+            }`}
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="bg-white rounded-xl p-4 shadow-sm space-y-3"
+          >
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <Filter className="w-4 h-4" />
+              <span>Advanced Filters</span>
+            </div>
+            
+            {/* Customer Name Filter */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">
+                Customer Name
+              </label>
+              <input
+                type="text"
+                placeholder="Search by customer name..."
+                value={customerNameFilter}
+                onChange={(e) => setCustomerNameFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+              />
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">
+                <Calendar className="w-3 h-3 inline mr-1" />
+                Date Range
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'today', label: 'Today' },
+                  { id: 'week', label: 'This Week' },
+                  { id: 'month', label: 'This Month' },
+                ].map((range) => (
+                  <button
+                    key={range.id}
+                    onClick={() => setDateRangeFilter(range.id as any)}
+                    className={`py-2 px-2 rounded-lg text-xs font-medium transition-all ${
+                      dateRangeFilter === range.id
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear Filters */}
+            {(customerNameFilter || dateRangeFilter !== 'all' || searchQuery) && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setCustomerNameFilter('');
+                  setDateRangeFilter('all');
+                }}
+                className="w-full py-2 text-sm text-amber-600 font-medium hover:bg-amber-50 rounded-lg transition-colors"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </motion.div>
+        )}
+
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[

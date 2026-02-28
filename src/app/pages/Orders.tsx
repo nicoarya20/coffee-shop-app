@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Package, Clock, CheckCircle, ChefHat } from 'lucide-react';
+import { Package, Clock, CheckCircle, ChefHat, ArrowRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api/client';
 import { toast } from 'sonner';
@@ -106,6 +106,7 @@ export function Orders() {
           text: 'Pending',
           color: 'text-yellow-600',
           bg: 'bg-yellow-100',
+          step: 1,
         };
       case 'preparing':
         return {
@@ -113,6 +114,7 @@ export function Orders() {
           text: 'Preparing',
           color: 'text-blue-600',
           bg: 'bg-blue-100',
+          step: 2,
         };
       case 'ready':
         return {
@@ -120,6 +122,7 @@ export function Orders() {
           text: 'Ready for Pickup',
           color: 'text-green-600',
           bg: 'bg-green-100',
+          step: 3,
         };
       case 'completed':
         return {
@@ -127,6 +130,7 @@ export function Orders() {
           text: 'Completed',
           color: 'text-gray-600',
           bg: 'bg-gray-100',
+          step: 4,
         };
       case 'cancelled':
         return {
@@ -134,8 +138,72 @@ export function Orders() {
           text: 'Cancelled',
           color: 'text-red-600',
           bg: 'bg-red-100',
+          step: 0,
         };
     }
+  };
+
+  // Order Timeline Component
+  const OrderTimeline = ({ order }: { order: Order }) => {
+    const statusInfo = getStatusInfo(order.status);
+    const currentStep = statusInfo.step;
+
+    const steps = [
+      { id: 1, label: 'Pending', icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-500' },
+      { id: 2, label: 'Preparing', icon: ChefHat, color: 'text-blue-600', bg: 'bg-blue-500' },
+      { id: 3, label: 'Ready', icon: Package, color: 'text-green-600', bg: 'bg-green-500' },
+      { id: 4, label: 'Completed', icon: CheckCircle, color: 'text-gray-600', bg: 'bg-gray-500' },
+    ];
+
+    return (
+      <div className="mt-4">
+        <div className="flex items-center justify-between">
+          {steps.map((step, index) => {
+            const StepIcon = step.icon;
+            const isCompleted = currentStep >= step.id;
+            const isCurrent = currentStep === step.id;
+            const isPending = currentStep < step.id;
+
+            return (
+              <div key={step.id} className="flex flex-col items-center flex-1">
+                {/* Step Circle */}
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                    isCompleted
+                      ? `${step.bg} border-${step.bg.replace('bg-', '')} text-white`
+                      : isPending
+                      ? 'border-gray-300 text-gray-300'
+                      : `border-${step.color.replace('text-', '')} ${step.color} bg-white`
+                  } ${isCurrent ? 'ring-2 ring-offset-2 ring-amber-400 scale-110' : ''}`}
+                >
+                  <StepIcon className="w-5 h-5" />
+                </div>
+
+                {/* Step Label */}
+                <p
+                  className={`text-xs mt-1 font-medium ${
+                    isCompleted ? step.color : isPending ? 'text-gray-300' : step.color
+                  }`}
+                >
+                  {step.label}
+                </p>
+
+                {/* Connector Arrow */}
+                {index < steps.length - 1 && (
+                  <div className="flex-1 flex items-center justify-center px-2">
+                    <ArrowRight
+                      className={`w-4 h-4 ${
+                        currentStep > step.id ? step.color : 'text-gray-300'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -269,6 +337,14 @@ export function Orders() {
                   </div>
                 ))}
               </div>
+
+              {/* Order Timeline */}
+              {order.status !== 'cancelled' && (
+                <div className="border-t border-gray-100 mt-3 pt-4">
+                  <p className="text-xs font-medium text-gray-700 mb-2">Order Progress</p>
+                  <OrderTimeline order={order} />
+                </div>
+              )}
 
               {/* Order Notes */}
               {order.notes && (
