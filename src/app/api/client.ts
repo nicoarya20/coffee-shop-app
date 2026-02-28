@@ -163,9 +163,18 @@ export const api = {
       return handleResponse<any[]>(response);
     },
 
-    updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
+    updateProfile: async (data: Partial<User> & { userId?: string }): Promise<ApiResponse<User>> => {
       const response = await fetch(`${API_BASE_URL}/user/profile`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return handleResponse<User>(response);
+    },
+
+    changePassword: async (data: { userId: string; currentPassword: string; newPassword: string }): Promise<ApiResponse<User>> => {
+      const response = await fetch(`${API_BASE_URL}/user/change-password`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });

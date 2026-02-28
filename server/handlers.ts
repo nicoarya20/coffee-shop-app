@@ -493,12 +493,23 @@ export async function getUserProfile(userId?: string): Promise<{ data: any; succ
   };
 }
 
-export async function updateUserProfile(data: { name?: string; email?: string; phone?: string }): Promise<{ data: any; success: boolean }> {
+export async function updateUserProfile(userId: string, data: { name?: string; email?: string; phone?: string }): Promise<{ data: any; success: boolean }> {
   await delay(300);
-  
+
+  console.log('📝 Update user profile:', {
+    userId,
+    data
+  });
+
   const user = await prisma.user.update({
-    where: { email: data.email! },
+    where: { id: userId },
     data,
+  });
+
+  console.log('✅ User profile updated:', {
+    id: user.id,
+    name: user.name,
+    email: user.email,
   });
 
   return {
@@ -509,6 +520,51 @@ export async function updateUserProfile(data: { name?: string; email?: string; p
       phone: user.phone,
       loyaltyPoints: user.loyaltyPoints,
       role: user.role,
+    },
+    success: true,
+  };
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ data: any; success: boolean }> {
+  await delay(300);
+
+  console.log('🔐 Change password request:', { userId });
+
+  // Get user with password
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  // Verify current password
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    throw new Error('Current password is incorrect');
+  }
+
+  // Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+
+  console.log('✅ Password changed successfully:', {
+    id: updatedUser.id,
+    email: updatedUser.email,
+  });
+
+  return {
+    data: {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
     },
     success: true,
   };

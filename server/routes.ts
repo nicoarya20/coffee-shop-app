@@ -16,6 +16,7 @@ import {
   updateOrderStatus,
   getUserProfile,
   updateUserProfile,
+  changePassword,
   login,
   register,
   uploadProductImage
@@ -375,10 +376,53 @@ router.get('/user/points-history', async (req, res) => {
 
 router.put('/user/profile', async (req, res) => {
   try {
-    const result = await updateUserProfile(req.body);
+    const { userId, ...data } = req.body;
+
+    console.log('📝 Update profile request:', {
+      userId,
+      hasData: !!data,
+    });
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId is required'
+      });
+    }
+
+    const result = await updateUserProfile(userId, data);
     res.json(result);
   } catch (error: any) {
+    console.error('❌ Update profile error:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/user/change-password', async (req, res) => {
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    console.log('🔐 Change password request:', {
+      userId,
+      hasCurrentPassword: !!currentPassword,
+      hasNewPassword: !!newPassword,
+    });
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'userId, currentPassword, and newPassword are required'
+      });
+    }
+
+    const result = await changePassword(userId, currentPassword, newPassword);
+    res.json(result);
+  } catch (error: any) {
+    console.error('❌ Change password error:', error);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Failed to change password' 
+    });
   }
 });
 
