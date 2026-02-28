@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getOrders, getOrderById, createOrder, updateOrderStatus } from '../../server/handlers';
+import { getOrders, getOrderById, createOrder, updateOrderStatus } from '../../server/handlers.js';
 
 export default async function handler(
   req: VercelRequest,

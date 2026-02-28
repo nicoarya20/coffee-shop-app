@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { register } from '../../server/handlers';
+import { register } from '../../server/handlers.js';
 
 export default async function handler(
   req: VercelRequest,

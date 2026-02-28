@@ -7,7 +7,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct
-} from '../../server/handlers';
+} from '../../server/handlers.js';
 
 export default async function handler(
   req: VercelRequest,
