@@ -1,20 +1,42 @@
 import { createBrowserRouter, Navigate, useLocation } from 'react-router';
-import { Home } from './pages/Home';
-import { Menu } from './pages/Menu';
-import { ProductDetail } from './pages/ProductDetail';
-import { Cart } from './pages/Cart';
-import { Checkout } from './pages/Checkout';
-import { Orders } from './pages/Orders';
-import { Profile } from './pages/Profile';
-import { Settings } from './pages/Settings';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { lazy, Suspense } from 'react';
 import { BottomNav } from './components/BottomNav';
 import { AdminBottomNav } from './components/admin/AdminBottomNav';
 import { useAuth } from './context/AuthContext';
+
+// Lazy load pages for code splitting
+const Home = lazy(() => import('./pages/Home'));
+const Menu = lazy(() => import('./pages/Menu'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Orders = lazy(() => import('./pages/Orders'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    </div>
+  );
+}
+
+// Wrap lazy loaded components with Suspense
+const LazyPage = ({ Component }: { Component: React.ComponentType<any> }) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -97,7 +119,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <Layout>
-        <Home />
+        <LazyPage Component={Home} />
       </Layout>
     ),
   },
@@ -105,19 +127,19 @@ export const router = createBrowserRouter([
     path: '/menu',
     element: (
       <Layout>
-        <Menu />
+        <LazyPage Component={Menu} />
       </Layout>
     ),
   },
   {
     path: '/product/:id',
-    element: <ProductDetail />,
+    element: <LazyPage Component={ProductDetail} />,
   },
   {
     path: '/cart',
     element: (
       <Layout>
-        <Cart />
+        <LazyPage Component={Cart} />
       </Layout>
     ),
   },
@@ -125,7 +147,7 @@ export const router = createBrowserRouter([
     path: '/checkout',
     element: (
       <ProtectedRoute>
-        <Checkout />
+        <LazyPage Component={Checkout} />
       </ProtectedRoute>
     ),
   },
@@ -134,7 +156,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Orders />
+          <LazyPage Component={Orders} />
         </Layout>
       </ProtectedRoute>
     ),
@@ -144,7 +166,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Profile />
+          <LazyPage Component={Profile} />
         </Layout>
       </ProtectedRoute>
     ),
@@ -154,7 +176,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Settings />
+          <LazyPage Component={Settings} />
         </Layout>
       </ProtectedRoute>
     ),
@@ -163,7 +185,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <AdminLayout>
-        <AdminDashboard />
+        <LazyPage Component={AdminDashboard} />
       </AdminLayout>
     ),
   },
@@ -171,7 +193,7 @@ export const router = createBrowserRouter([
     path: '/admin/orders',
     element: (
       <AdminLayout>
-        <AdminOrdersPage />
+        <LazyPage Component={AdminOrdersPage} />
       </AdminLayout>
     ),
   },
@@ -179,7 +201,7 @@ export const router = createBrowserRouter([
     path: '/admin/products',
     element: (
       <AdminLayout>
-        <AdminProductsPage />
+        <LazyPage Component={AdminProductsPage} />
       </AdminLayout>
     ),
   },

@@ -14,15 +14,24 @@ import {
   Trash2,
   User,
   Sun,
+  ShoppingCart,
+  Package,
+  AlertTriangle
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../api/client';
 
 export function Settings() {
   const { theme, toggleTheme } = useTheme();
-  
+  const { clearCart } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [notifications, setNotifications] = useState({
     orderUpdates: true,
     promotions: false,
@@ -38,6 +47,10 @@ export function Settings() {
     phone: '+62 812 3456 7890',
   });
 
+  const [showClearCartConfirm, setShowClearCartConfirm] = useState(false);
+  const [showClearOrdersConfirm, setShowClearOrdersConfirm] = useState(false);
+  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+
   const handleSaveProfile = () => {
     toast.success('Profile updated successfully');
   };
@@ -47,6 +60,49 @@ export function Settings() {
       ...prev,
       [key]: !prev[key],
     }));
+  };
+
+  const handleClearCart = () => {
+    clearCart();
+    setShowClearCartConfirm(false);
+    toast.success('Shopping cart cleared');
+  };
+
+  const handleClearOrderHistory = async () => {
+    if (!user?.id) {
+      toast.error('Please login to clear order history');
+      return;
+    }
+
+    try {
+      // Note: This would require a backend endpoint to delete user's orders
+      // For now, we'll show a message
+      toast.info('Order history clearing requires admin access');
+      setShowClearOrdersConfirm(false);
+      
+      // TODO: Implement backend endpoint for deleting user's order history
+      // await api.orders.deleteUserOrders(user.id);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to clear order history');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      toast.error('Please login to delete account');
+      return;
+    }
+
+    try {
+      // Note: This would require a backend endpoint to delete user account
+      toast.info('Account deletion requires admin access');
+      setShowDeleteAccountConfirm(false);
+      
+      // TODO: Implement backend endpoint for account deletion
+      // await api.user.deleteAccount(user.id);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete account');
+    }
   };
 
   return (
@@ -312,6 +368,28 @@ export function Settings() {
               </div>
               <ChevronRight className="w-5 h-5 text-gray-400" />
             </button>
+
+            <button
+              onClick={() => setShowClearOrdersConfirm(true)}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Package className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">Clear Order History</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
+
+            <button
+              onClick={() => setShowClearCartConfirm(true)}
+              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingCart className="w-5 h-5 text-gray-600" />
+                <span className="font-medium text-gray-900">Clear Shopping Cart</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </button>
           </div>
         </motion.div>
 
@@ -331,7 +409,10 @@ export function Settings() {
             Once you delete your account, there is no going back. Please be certain.
           </p>
 
-          <button className="w-full bg-red-50 text-red-600 rounded-lg py-3 font-medium hover:bg-red-100 transition-colors">
+          <button
+            onClick={() => setShowDeleteAccountConfirm(true)}
+            className="w-full bg-red-50 text-red-600 rounded-lg py-3 font-medium hover:bg-red-100 transition-colors"
+          >
             Delete Account
           </button>
         </motion.div>
@@ -347,6 +428,111 @@ export function Settings() {
           <p className="text-xs text-gray-400 mt-1">Made with ☕</p>
         </motion.div>
       </div>
+
+      {/* Clear Cart Confirmation Modal */}
+      {showClearCartConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-sm"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <ShoppingCart className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Clear Shopping Cart?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              This will remove all items from your cart. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowClearCartConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearCart}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+              >
+                Clear Cart
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Clear Order History Confirmation Modal */}
+      {showClearOrdersConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-sm"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <Package className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Clear Order History?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              This will remove all your order history. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowClearOrdersConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearOrderHistory}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+              >
+                Clear History
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteAccountConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-sm"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">Delete Account?</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-6">
+              This will permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteAccountConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

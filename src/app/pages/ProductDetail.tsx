@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ChevronLeft, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, Minus, Plus, ShoppingCart, ArrowLeft, Share2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { api } from '../api/client';
 import { Product } from '../types';
@@ -69,6 +69,41 @@ export function ProductDetail() {
     }
   };
 
+  const handleShare = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.name,
+      text: `Check out ${product.name} - ${formatPrice(currentPrice)}`,
+      url: window.location.href,
+    };
+
+    // Try Web Share API first (mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success('Shared successfully!');
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          // Fallback to clipboard
+          await copyToClipboard(shareData.url);
+        }
+      }
+    } else {
+      // Fallback to clipboard
+      await copyToClipboard(shareData.url);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Link copied to clipboard!');
+    } catch (error) {
+      toast.error('Failed to share');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -100,14 +135,23 @@ export function ProductDetail() {
     <div className="min-h-screen bg-white pb-24">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-md mx-auto px-4 py-4 flex items-center gap-4">
+        <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full active:scale-95 transition-transform"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-semibold">Product Detail</h1>
+          </div>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleShare}
             className="p-2 hover:bg-gray-100 rounded-full active:scale-95 transition-transform"
+            title="Share product"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <Share2 className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-lg font-semibold">Product Detail</h1>
         </div>
       </div>
 

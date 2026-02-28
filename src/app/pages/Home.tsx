@@ -1,16 +1,19 @@
 import { motion } from 'motion/react';
-import { ChevronRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router';
+import { ChevronRight, Sparkles, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
 import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { api } from '../api/client';
 import { Product } from '../types';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export function Home() {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchFeaturedProducts();
@@ -27,6 +30,15 @@ export function Home() {
       console.error('Failed to fetch featured products:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/menu?search=${encodeURIComponent(searchQuery)}`);
+    } else {
+      toast.info('Please enter a search term');
     }
   };
 
@@ -63,21 +75,24 @@ export function Home() {
           </motion.p>
 
           {/* Search Bar */}
-          <motion.div
+          <motion.form
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
+            onSubmit={handleSearch}
             className="relative"
           >
-            <Link to="/menu">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search coffee, tea, snacks..."
-                className="w-full px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-amber-100 focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
-                readOnly
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white placeholder-amber-100 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
-            </Link>
-          </motion.div>
+            </div>
+          </motion.form>
         </div>
       </motion.div>
 
