@@ -4,20 +4,20 @@ import { BottomNav } from './components/BottomNav';
 import { AdminBottomNav } from './components/admin/AdminBottomNav';
 import { useAuth } from './context/AuthContext';
 
-// Lazy load pages for code splitting
-const Home = lazy(() => import('./pages/Home'));
-const Menu = lazy(() => import('./pages/Menu'));
-const ProductDetail = lazy(() => import('./pages/ProductDetail'));
-const Cart = lazy(() => import('./pages/Cart'));
-const Checkout = lazy(() => import('./pages/Checkout'));
-const Orders = lazy(() => import('./pages/Orders'));
-const Profile = lazy(() => import('./pages/Profile'));
-const Settings = lazy(() => import('./pages/Settings'));
-const Login = lazy(() => import('./pages/Login'));
-const Register = lazy(() => import('./pages/Register'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
-const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'));
+// Lazy load pages for code splitting (using named exports)
+const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const Menu = lazy(() => import('./pages/Menu').then(module => ({ default: module.Menu })));
+const ProductDetail = lazy(() => import('./pages/ProductDetail').then(module => ({ default: module.ProductDetail })));
+const Cart = lazy(() => import('./pages/Cart').then(module => ({ default: module.Cart })));
+const Checkout = lazy(() => import('./pages/Checkout').then(module => ({ default: module.Checkout })));
+const Orders = lazy(() => import('./pages/Orders').then(module => ({ default: module.Orders })));
+const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })));
+const Settings = lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then(module => ({ default: module.AdminOrdersPage })));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage').then(module => ({ default: module.AdminProductsPage })));
 
 // Loading fallback component
 function PageLoader() {
