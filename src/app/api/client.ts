@@ -1,7 +1,30 @@
 import { ApiResponse, ProductsQueryParams, CreateOrderInput, UpdateOrderStatusInput } from './types';
 import { Product, Order, User } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// API Base URL configuration
+// Priority: 1) VITE_API_URL env var, 2) /api proxy (for localhost), 3) direct IP fallback
+const getApiBaseUrl = () => {
+  // Check if running on network (not localhost)
+  const isNetworkAccess = !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/);
+  
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // For network access without env var, use direct IP
+  if (isNetworkAccess) {
+    // Get the server IP from current hostname
+    const serverIp = window.location.hostname;
+    return `http://${serverIp}:3001/api`;
+  }
+  
+  // For localhost development, use proxy
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔌 API Base URL:', API_BASE_URL);
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -109,8 +132,19 @@ export const api = {
 
   // Orders API
   orders: {
-    getAll: async (): Promise<ApiResponse<Order[]>> => {
-      const response = await fetch(`${API_BASE_URL}/orders`);
+    getAll: async (params?: { userId?: string; status?: string }): Promise<ApiResponse<Order[]>> => {
+      const searchParams = new URLSearchParams();
+      if (params?.userId) searchParams.set('userId', params.userId);
+      if (params?.status) searchParams.set('status', params.status);
+      
+      const queryString = searchParams.toString();
+      const url = queryString 
+        ? `${API_BASE_URL}/orders?${queryString}`
+        : `${API_BASE_URL}/orders`;
+      
+      console.log('📡 Fetching orders from:', url);
+      
+      const response = await fetch(url);
       return handleResponse<Order[]>(response);
     },
 
@@ -152,9 +186,18 @@ export const api = {
       return handleResponse<any[]>(response);
     },
 
-    updateProfile: async (data: Partial<User>): Promise<ApiResponse<User>> => {
+    updateProfile: async (data: Partial<User> & { userId?: string }): Promise<ApiResponse<User>> => {
       const response = await fetch(`${API_BASE_URL}/user/profile`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return handleResponse<User>(response);
+    },
+
+    changePassword: async (data: { userId: string; currentPassword: string; newPassword: string }): Promise<ApiResponse<User>> => {
+      const response = await fetch(`${API_BASE_URL}/user/change-password`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });

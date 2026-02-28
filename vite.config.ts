@@ -16,13 +16,15 @@ export default defineConfig({
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
   server: {
-    host: true,        // ⬅️ WAJIB (buka ke LAN)
-    port: 5137,        // ⬅️ optional tapi aku saranin fix
-    strictPort: true,  // ⬅️ biar konsisten
+    host: '0.0.0.0',   // ⬅️ Bind ke semua network interfaces
+    port: 5137,
+    strictPort: true,
 
+    // Proxy hanya untuk development di laptop
+    // Untuk network access, API harus direct
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:3001',
+        target: 'http://localhost:3001',
         changeOrigin: true,
       },
     },

@@ -1,20 +1,35 @@
 import { createBrowserRouter, Navigate, useLocation } from 'react-router';
-import { Home } from './pages/Home';
-import { Menu } from './pages/Menu';
-import { ProductDetail } from './pages/ProductDetail';
-import { Cart } from './pages/Cart';
-import { Checkout } from './pages/Checkout';
-import { Orders } from './pages/Orders';
-import { Profile } from './pages/Profile';
-import { Settings } from './pages/Settings';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { lazy, Suspense, ReactNode } from 'react';
 import { BottomNav } from './components/BottomNav';
 import { AdminBottomNav } from './components/admin/AdminBottomNav';
 import { useAuth } from './context/AuthContext';
+
+// Lazy load pages for code splitting (using named exports)
+const Home = lazy(() => import('./pages/Home').then(module => ({ default: module.Home })));
+const Menu = lazy(() => import('./pages/Menu').then(module => ({ default: module.Menu })));
+const ProductDetail = lazy(() => import('./pages/ProductDetail').then(module => ({ default: module.ProductDetail })));
+const Cart = lazy(() => import('./pages/Cart').then(module => ({ default: module.Cart })));
+const Checkout = lazy(() => import('./pages/Checkout').then(module => ({ default: module.Checkout })));
+const Orders = lazy(() => import('./pages/Orders').then(module => ({ default: module.Orders })));
+const Profile = lazy(() => import('./pages/Profile').then(module => ({ default: module.Profile })));
+const Settings = lazy(() => import('./pages/Settings').then(module => ({ default: module.Settings })));
+const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
+const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.Register })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage').then(module => ({ default: module.AdminOrdersPage })));
+const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage').then(module => ({ default: module.AdminProductsPage })));
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,10 +44,28 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user || !isAdmin) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return (
+      <Navigate 
+        to="/login" 
+        state={{ 
+          from: location,
+          reason: isAdmin ? 'admin-required' : 'auth-required'
+        }} 
+        replace 
+      />
+    );
   }
 
   return (
@@ -47,9 +80,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
+    // Redirect to login and save the attempted location
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -69,7 +112,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <Layout>
-        <Home />
+        <Suspense fallback={<PageLoader />}><Home /></Suspense>
       </Layout>
     ),
   },
@@ -77,19 +120,21 @@ export const router = createBrowserRouter([
     path: '/menu',
     element: (
       <Layout>
-        <Menu />
+        <Suspense fallback={<PageLoader />}><Menu /></Suspense>
       </Layout>
     ),
   },
   {
     path: '/product/:id',
-    element: <ProductDetail />,
+    element: (
+      <Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>
+    ),
   },
   {
     path: '/cart',
     element: (
       <Layout>
-        <Cart />
+        <Suspense fallback={<PageLoader />}><Cart /></Suspense>
       </Layout>
     ),
   },
@@ -97,7 +142,7 @@ export const router = createBrowserRouter([
     path: '/checkout',
     element: (
       <ProtectedRoute>
-        <Checkout />
+        <Suspense fallback={<PageLoader />}><Checkout /></Suspense>
       </ProtectedRoute>
     ),
   },
@@ -106,7 +151,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Orders />
+          <Suspense fallback={<PageLoader />}><Orders /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -116,7 +161,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Profile />
+          <Suspense fallback={<PageLoader />}><Profile /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -126,7 +171,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <Settings />
+          <Suspense fallback={<PageLoader />}><Settings /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -135,7 +180,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <AdminLayout>
-        <AdminDashboard />
+        <Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>
       </AdminLayout>
     ),
   },
@@ -143,7 +188,7 @@ export const router = createBrowserRouter([
     path: '/admin/orders',
     element: (
       <AdminLayout>
-        <AdminOrdersPage />
+        <Suspense fallback={<PageLoader />}><AdminOrdersPage /></Suspense>
       </AdminLayout>
     ),
   },
@@ -151,7 +196,7 @@ export const router = createBrowserRouter([
     path: '/admin/products',
     element: (
       <AdminLayout>
-        <AdminProductsPage />
+        <Suspense fallback={<PageLoader />}><AdminProductsPage /></Suspense>
       </AdminLayout>
     ),
   },

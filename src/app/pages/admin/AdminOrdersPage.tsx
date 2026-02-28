@@ -5,7 +5,14 @@ import {
   CheckCircle,
   ChefHat,
   ArrowLeft,
-  DollarSign
+  DollarSign,
+  Search,
+  Calendar,
+  Filter,
+  Download,
+  X,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
@@ -26,6 +33,16 @@ export function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [orderFilter, setOrderFilter] = useState<'all' | 'pending' | 'active' | 'completed'>('all');
+  
+  // Advanced filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [customerNameFilter, setCustomerNameFilter] = useState('');
+  const [dateRangeFilter, setDateRangeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Order details modal
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
 
   const fetchOrders = async (isSilent = false) => {
     try {
@@ -54,6 +71,44 @@ export function AdminOrdersPage() {
     } catch (error) {
       toast.error('Failed to update order');
     }
+  };
+
+  // Export orders to CSV
+  const exportOrdersToCSV = () => {
+    const headers = ['Order ID', 'Ticket Number', 'Customer', 'Date', 'Status', 'Items', 'Total', 'Notes'];
+    
+    const csvData = filteredOrders.map(order => {
+      const ticketNumber = generateTicketNumber(order);
+      const date = formatDate(order.timestamp);
+      const items = order.items.map(item => `${item.product.name} (${item.quantity})`).join('; ');
+      const notes = order.notes || '';
+      
+      return [
+        order.id,
+        ticketNumber,
+        order.customerName,
+        date,
+        order.status.toUpperCase(),
+        items,
+        order.total.toString(),
+        notes,
+      ].map(field => `"${field.replace(/"/g, '""')}"`).join(',');
+    });
+    
+    const csv = [headers.join(','), ...csvData].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    toast.success('Orders exported successfully');
+  };
+
+  // View order details
+  const viewOrderDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
   };
 
   const formatPrice = (price: number) => {
@@ -99,10 +154,45 @@ export function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter(order => {
+    // Status filter
     if (orderFilter === 'pending') return order.status === 'pending';
     if (orderFilter === 'active') return ['preparing', 'ready'].includes(order.status);
     if (orderFilter === 'completed') return order.status === 'completed';
     if (orderFilter === 'cancelled') return order.status === 'cancelled';
+    
+    // Search by order ID or ticket number
+    if (searchQuery) {
+      const ticketNumber = generateTicketNumber(order).toLowerCase();
+      const orderId = order.id.toLowerCase();
+      if (!ticketNumber.includes(searchQuery.toLowerCase()) && !orderId.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Filter by customer name
+    if (customerNameFilter) {
+      if (!order.customerName.toLowerCase().includes(customerNameFilter.toLowerCase())) {
+        return false;
+      }
+    }
+    
+    // Date range filter
+    if (dateRangeFilter !== 'all') {
+      const orderDate = new Date(order.timestamp);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      if (dateRangeFilter === 'today') {
+        if (orderDate < today) return false;
+      } else if (dateRangeFilter === 'week') {
+        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (orderDate < weekAgo) return false;
+      } else if (dateRangeFilter === 'month') {
+        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (orderDate < monthAgo) return false;
+      }
+    }
+    
     return true;
   });
 
@@ -133,14 +223,23 @@ export function AdminOrdersPage() {
       {/* Header */}
       <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-b-3xl sticky top-0 z-40">
         <div className="max-w-md mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <Link to="/admin" className="p-2 hover:bg-white/20 rounded-lg transition-colors">
-              <ArrowLeft className="w-6 h-6" />
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Orders Management</h1>
-              <p className="text-amber-100 text-sm">Manage all customer orders</p>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Link to="/admin" className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold">Orders Management</h1>
+                <p className="text-amber-100 text-sm">Manage all customer orders</p>
+              </div>
             </div>
+            <button
+              onClick={exportOrdersToCSV}
+              className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+              title="Export to CSV"
+            >
+              <Download className="w-6 h-6" />
+            </button>
           </div>
 
           {/* Quick Stats */}
@@ -165,6 +264,100 @@ export function AdminOrdersPage() {
 
       {/* Content */}
       <div className="max-w-md mx-auto px-4 mt-4 space-y-4">
+        {/* Search and Filter Toggle */}
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by order ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`p-2 rounded-lg transition-colors ${
+              showFilters || customerNameFilter || dateRangeFilter !== 'all'
+                ? 'bg-amber-500 text-white'
+                : 'bg-white text-gray-600 border border-gray-200'
+            }`}
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="bg-white rounded-xl p-4 shadow-sm space-y-3"
+          >
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <Filter className="w-4 h-4" />
+              <span>Advanced Filters</span>
+            </div>
+            
+            {/* Customer Name Filter */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">
+                Customer Name
+              </label>
+              <input
+                type="text"
+                placeholder="Search by customer name..."
+                value={customerNameFilter}
+                onChange={(e) => setCustomerNameFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+              />
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">
+                <Calendar className="w-3 h-3 inline mr-1" />
+                Date Range
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'today', label: 'Today' },
+                  { id: 'week', label: 'This Week' },
+                  { id: 'month', label: 'This Month' },
+                ].map((range) => (
+                  <button
+                    key={range.id}
+                    onClick={() => setDateRangeFilter(range.id as any)}
+                    className={`py-2 px-2 rounded-lg text-xs font-medium transition-all ${
+                      dateRangeFilter === range.id
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear Filters */}
+            {(customerNameFilter || dateRangeFilter !== 'all' || searchQuery) && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setCustomerNameFilter('');
+                  setDateRangeFilter('all');
+                }}
+                className="w-full py-2 text-sm text-amber-600 font-medium hover:bg-amber-50 rounded-lg transition-colors"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </motion.div>
+        )}
+
         {/* Filter Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[
@@ -254,11 +447,25 @@ export function AdminOrdersPage() {
 
                   {/* Order Notes */}
                   {order.notes && (
-                    <div className="mb-3 p-2 bg-gray-50 rounded-lg">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Notes:</p>
-                      <p className="text-sm text-gray-600">{order.notes}</p>
+                    <div className="mb-3 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-amber-700 mb-1">Customer Notes:</p>
+                          <p className="text-sm text-amber-900">{order.notes}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* View Details Button */}
+                  <button
+                    onClick={() => viewOrderDetails(order)}
+                    className="w-full mb-3 flex items-center justify-center gap-2 py-2 text-sm text-amber-600 font-medium hover:bg-amber-50 rounded-lg transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    View Details
+                  </button>
 
                   {/* Total & Actions */}
                   <div className="border-t border-gray-100 pt-3">
@@ -321,6 +528,114 @@ export function AdminOrdersPage() {
           )}
         </div>
       </div>
+
+      {/* Order Details Modal */}
+      {showOrderDetails && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-lg my-8"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Order Details</h2>
+              <button
+                onClick={() => setShowOrderDetails(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Order Info */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Ticket Number</span>
+                <span className="font-bold text-gray-900">{generateTicketNumber(selectedOrder)}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Order ID</span>
+                <span className="font-mono text-xs text-gray-600">{selectedOrder.id}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Customer</span>
+                <span className="font-medium text-gray-900">{selectedOrder.customerName}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Date & Time</span>
+                <span className="text-sm text-gray-900">{formatDate(selectedOrder.timestamp)}</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Status</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusInfo(selectedOrder.status).bg} ${getStatusInfo(selectedOrder.status).color}`}>
+                  {getStatusInfo(selectedOrder.status).text}
+                </span>
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div className="mt-6">
+              <h3 className="font-bold text-gray-900 mb-3">Order Items</h3>
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {selectedOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.product.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {item.size && `${item.size} · `}Qty: {item.quantity}
+                      </p>
+                    </div>
+                    <p className="font-bold text-gray-900">{formatPrice(item.total)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Customer Notes */}
+            {selectedOrder.notes && (
+              <div className="mt-4 p-3 bg-amber-50 border-l-4 border-amber-500 rounded-lg">
+                <p className="text-xs font-bold text-amber-700 mb-1">Customer Notes:</p>
+                <p className="text-sm text-amber-900">{selectedOrder.notes}</p>
+              </div>
+            )}
+
+            {/* Order Total */}
+            <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
+              <span className="text-lg font-medium text-gray-600">Total Amount</span>
+              <span className="text-2xl font-bold text-amber-600">{formatPrice(selectedOrder.total)}</span>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => {
+                  // Print functionality
+                  window.print();
+                }}
+                className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Print Receipt
+              </button>
+              <button
+                onClick={() => setShowOrderDetails(false)}
+                className="flex-1 px-4 py-3 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

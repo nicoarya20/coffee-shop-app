@@ -19,9 +19,22 @@ export function Login() {
     e.preventDefault();
     setIsLoading(true);
 
+    // Client-side validation
+    if (!email.trim()) {
+      toast.error('Email is required');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!password) {
+      toast.error('Password is required');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      console.log('🔐 Attempting login:', { 
-        email, 
+      console.log('🔐 Attempting login:', {
+        email,
         activeTab,
         expectedRole: activeTab === 'admin' ? 'ADMIN' : 'USER'
       });
@@ -43,6 +56,14 @@ export function Login() {
 
       // Redirect based on user role, not tab selection
       const from = (location.state as any)?.from?.pathname;
+      const redirectReason = (location.state as any)?.reason;
+
+      // Show message if redirected due to auth requirement
+      if (redirectReason === 'auth-required') {
+        toast.info('Please login to continue');
+      } else if (redirectReason === 'admin-required') {
+        toast.info('Admin login required');
+      }
 
       if (loggedInUser?.role?.toUpperCase() === 'ADMIN') {
         navigate('/admin', { replace: true });
@@ -52,7 +73,19 @@ export function Login() {
       }
     } catch (error: any) {
       console.error('Login failed:', error);
-      toast.error(error.message || 'Login failed. Please check your credentials.');
+      
+      // Show specific error messages based on error type
+      let errorMessage = 'Login failed. Please check your credentials.';
+      
+      if (error.message?.includes('not found')) {
+        errorMessage = 'Account not found. Please check your email or register first.';
+      } else if (error.message?.includes('credentials') || error.message?.includes('failed')) {
+        errorMessage = 'Invalid email or password. Please try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
