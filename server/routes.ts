@@ -78,8 +78,8 @@ router.get('/products', async (req, res) => {
       category as string,
       featured === 'true',
       search as string,
-      limit ? parseInt(limit as string) : undefined,
-      offset ? parseInt(offset as string) : undefined
+      limit && typeof limit === 'string' ? parseInt(limit) : undefined,
+      offset && typeof offset === 'string' ? parseInt(offset) : undefined
     );
     res.json(result);
   } catch (error: any) {

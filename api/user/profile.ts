@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getUserProfile, updateUserProfile, changePassword } from '../../server/handlers';
+import { getUserProfile, updateUserProfile, changePassword } from '../../server/handlers.js';
 
 export default async function handler(
   req: VercelRequest,
