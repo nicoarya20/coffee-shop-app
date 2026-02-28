@@ -31,20 +31,6 @@ function PageLoader() {
   );
 }
 
-// Helper to wrap lazy components with Suspense
-function withSuspense<P extends object>(
-  Component: React.ComponentType<P>,
-  fallback: ReactNode = <PageLoader />
-) {
-  return function SuspenseWrapper(props: P) {
-    return (
-      <Suspense fallback={fallback}>
-        <Component {...props} />
-      </Suspense>
-    );
-  };
-}
-
 function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -126,7 +112,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <Layout>
-        {withSuspense(Home)()}
+        <Suspense fallback={<PageLoader />}><Home /></Suspense>
       </Layout>
     ),
   },
@@ -134,19 +120,21 @@ export const router = createBrowserRouter([
     path: '/menu',
     element: (
       <Layout>
-        {withSuspense(Menu)()}
+        <Suspense fallback={<PageLoader />}><Menu /></Suspense>
       </Layout>
     ),
   },
   {
     path: '/product/:id',
-    element: withSuspense(ProductDetail)(),
+    element: (
+      <Suspense fallback={<PageLoader />}><ProductDetail /></Suspense>
+    ),
   },
   {
     path: '/cart',
     element: (
       <Layout>
-        {withSuspense(Cart)()}
+        <Suspense fallback={<PageLoader />}><Cart /></Suspense>
       </Layout>
     ),
   },
@@ -154,7 +142,7 @@ export const router = createBrowserRouter([
     path: '/checkout',
     element: (
       <ProtectedRoute>
-        {withSuspense(Checkout)()}
+        <Suspense fallback={<PageLoader />}><Checkout /></Suspense>
       </ProtectedRoute>
     ),
   },
@@ -163,7 +151,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          {withSuspense(Orders)()}
+          <Suspense fallback={<PageLoader />}><Orders /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -173,7 +161,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          {withSuspense(Profile)()}
+          <Suspense fallback={<PageLoader />}><Profile /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -183,7 +171,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          {withSuspense(Settings)()}
+          <Suspense fallback={<PageLoader />}><Settings /></Suspense>
         </Layout>
       </ProtectedRoute>
     ),
@@ -192,7 +180,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <AdminLayout>
-        {withSuspense(AdminDashboard)()}
+        <Suspense fallback={<PageLoader />}><AdminDashboard /></Suspense>
       </AdminLayout>
     ),
   },
@@ -200,7 +188,7 @@ export const router = createBrowserRouter([
     path: '/admin/orders',
     element: (
       <AdminLayout>
-        {withSuspense(AdminOrdersPage)()}
+        <Suspense fallback={<PageLoader />}><AdminOrdersPage /></Suspense>
       </AdminLayout>
     ),
   },
@@ -208,7 +196,7 @@ export const router = createBrowserRouter([
     path: '/admin/products',
     element: (
       <AdminLayout>
-        {withSuspense(AdminProductsPage)()}
+        <Suspense fallback={<PageLoader />}><AdminProductsPage /></Suspense>
       </AdminLayout>
     ),
   },
