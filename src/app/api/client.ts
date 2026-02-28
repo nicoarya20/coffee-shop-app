@@ -1,7 +1,30 @@
 import { ApiResponse, ProductsQueryParams, CreateOrderInput, UpdateOrderStatusInput } from './types';
 import { Product, Order, User } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// API Base URL configuration
+// Priority: 1) VITE_API_URL env var, 2) /api proxy (for localhost), 3) direct IP fallback
+const getApiBaseUrl = () => {
+  // Check if running on network (not localhost)
+  const isNetworkAccess = !window.location.hostname.match(/^(localhost|127\.0\.0\.1)$/);
+  
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // For network access without env var, use direct IP
+  if (isNetworkAccess) {
+    // Get the server IP from current hostname
+    const serverIp = window.location.hostname;
+    return `http://${serverIp}:3001/api`;
+  }
+  
+  // For localhost development, use proxy
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔌 API Base URL:', API_BASE_URL);
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
