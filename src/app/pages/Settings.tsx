@@ -18,7 +18,7 @@ import {
   Package,
   AlertTriangle
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
@@ -29,7 +29,7 @@ import { api } from '../api/client';
 export function Settings() {
   const { theme, toggleTheme } = useTheme();
   const { clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState({
@@ -41,18 +41,61 @@ export function Settings() {
 
   const [language, setLanguage] = useState('en');
 
+  // Initialize profile form with actual user data
   const [profile, setProfile] = useState({
-    name: 'Coffee Lover',
-    email: 'coffee@example.com',
-    phone: '+62 812 3456 7890',
+    name: '',
+    email: '',
+    phone: '',
   });
 
   const [showClearCartConfirm, setShowClearCartConfirm] = useState(false);
   const [showClearOrdersConfirm, setShowClearOrdersConfirm] = useState(false);
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully');
+  // Sync profile form with user data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        name: user.name || '',
+        email: user.email,
+        phone: user.phone || '',
+      });
+    }
+  }, [user]);
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) {
+      toast.error('Please login to update profile');
+      return;
+    }
+
+    if (!profile.name || !profile.email) {
+      toast.error('Name and email are required');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const response = await api.user.updateProfile({
+        userId: user.id,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone || undefined,
+      });
+
+      if (response.success) {
+        await refreshUser?.();
+        toast.success('Profile updated successfully');
+      } else {
+        toast.error('Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleToggleNotification = (key: keyof typeof notifications) => {
@@ -183,10 +226,20 @@ export function Settings() {
 
             <button
               onClick={handleSaveProfile}
-              className="w-full bg-amber-500 text-white rounded-lg py-3 font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              disabled={isSavingProfile || !user}
+              className="w-full bg-amber-500 text-white rounded-lg py-3 font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Save className="w-5 h-5" />
-              Save Changes
+              {isSavingProfile ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
         </motion.div>
