@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate, useLocation } from 'react-router';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, ReactNode } from 'react';
 import { BottomNav } from './components/BottomNav';
 import { AdminBottomNav } from './components/admin/AdminBottomNav';
 import { useAuth } from './context/AuthContext';
@@ -31,12 +31,19 @@ function PageLoader() {
   );
 }
 
-// Wrap lazy loaded components with Suspense
-const LazyPage = ({ Component }: { Component: React.ComponentType<any> }) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
-);
+// Helper to wrap lazy components with Suspense
+function withSuspense<P extends object>(
+  Component: React.ComponentType<P>,
+  fallback: ReactNode = <PageLoader />
+) {
+  return function SuspenseWrapper(props: P) {
+    return (
+      <Suspense fallback={fallback}>
+        <Component {...props} />
+      </Suspense>
+    );
+  };
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -119,7 +126,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: (
       <Layout>
-        <LazyPage Component={Home} />
+        {withSuspense(Home)()}
       </Layout>
     ),
   },
@@ -127,19 +134,19 @@ export const router = createBrowserRouter([
     path: '/menu',
     element: (
       <Layout>
-        <LazyPage Component={Menu} />
+        {withSuspense(Menu)()}
       </Layout>
     ),
   },
   {
     path: '/product/:id',
-    element: <LazyPage Component={ProductDetail} />,
+    element: withSuspense(ProductDetail)(),
   },
   {
     path: '/cart',
     element: (
       <Layout>
-        <LazyPage Component={Cart} />
+        {withSuspense(Cart)()}
       </Layout>
     ),
   },
@@ -147,7 +154,7 @@ export const router = createBrowserRouter([
     path: '/checkout',
     element: (
       <ProtectedRoute>
-        <LazyPage Component={Checkout} />
+        {withSuspense(Checkout)()}
       </ProtectedRoute>
     ),
   },
@@ -156,7 +163,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <LazyPage Component={Orders} />
+          {withSuspense(Orders)()}
         </Layout>
       </ProtectedRoute>
     ),
@@ -166,7 +173,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <LazyPage Component={Profile} />
+          {withSuspense(Profile)()}
         </Layout>
       </ProtectedRoute>
     ),
@@ -176,7 +183,7 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Layout>
-          <LazyPage Component={Settings} />
+          {withSuspense(Settings)()}
         </Layout>
       </ProtectedRoute>
     ),
@@ -185,7 +192,7 @@ export const router = createBrowserRouter([
     path: '/admin',
     element: (
       <AdminLayout>
-        <LazyPage Component={AdminDashboard} />
+        {withSuspense(AdminDashboard)()}
       </AdminLayout>
     ),
   },
@@ -193,7 +200,7 @@ export const router = createBrowserRouter([
     path: '/admin/orders',
     element: (
       <AdminLayout>
-        <LazyPage Component={AdminOrdersPage} />
+        {withSuspense(AdminOrdersPage)()}
       </AdminLayout>
     ),
   },
@@ -201,7 +208,7 @@ export const router = createBrowserRouter([
     path: '/admin/products',
     element: (
       <AdminLayout>
-        <LazyPage Component={AdminProductsPage} />
+        {withSuspense(AdminProductsPage)()}
       </AdminLayout>
     ),
   },
